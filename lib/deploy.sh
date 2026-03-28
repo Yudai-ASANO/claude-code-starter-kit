@@ -323,7 +323,8 @@ _copy_dir_safe() {
       # Copy only entries (files/directories) that do not exist in dest
       # -a : archive (recursive, preserve attributes)
       # -n : no-clobber (do not overwrite existing files)
-      cp -an "$src"/. "$dest"/
+      # || true: macOS BSD cp -n returns 1 when files are skipped (expected)
+      cp -an "$src"/. "$dest"/ || true
       ok "$label: $STR_FRESH_NEW_ONLY"
       ;;
   esac

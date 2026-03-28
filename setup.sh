@@ -184,7 +184,8 @@ deploy_hook_scripts() {
             ok "$name hooks: ${STR_FRESH_SKIPPED:-skipped}"
             ;;
           new)
-            cp -an "$src"/. "$dest"/
+            # || true: macOS BSD cp -n returns 1 when files are skipped (expected)
+            cp -an "$src"/. "$dest"/ || true
             _make_hooks_executable "$dest"
             ok "$name hooks: ${STR_FRESH_NEW_ONLY:-new files only}"
             ;;
