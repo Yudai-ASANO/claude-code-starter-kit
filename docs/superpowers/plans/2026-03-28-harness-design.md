@@ -702,7 +702,7 @@ done
 
 if [[ "${HARNESS_GATE_MODE:-}" == "strict" ]]; then
   echo "[gate] Verification failed: ${failed_str}. Commit blocked (strict mode)." >&2
-  printf '%s' "$input"
+  # strict mode: NO stdout pass-through on failure (prevents context injection on blocked commit)
   exit 1
 else
   echo "[gate] Verification failed: ${failed_str}. Advisory mode — commit proceeds." >&2
@@ -791,13 +791,13 @@ case "$command_str" in
     is_test_runner=true ;;
   *"pnpm test"*|*"pnpm exec vitest"*|*"yarn test"*)
     is_test_runner=true ;;
-  *"npm run test"*)
+  *"npm run test"*|*"npm run test:"*)
     is_test_runner=true ;;
   *"pytest"*|*"python -m pytest"*|*"python3 -m pytest"*)
     is_test_runner=true ;;
   *"swift test"*|*"xcodebuild test"*)
     is_test_runner=true ;;
-  *"gradlew test"*|*"gradle test"*)
+  *"./gradlew test"*|*"gradlew test"*|*"gradle test"*)
     is_test_runner=true ;;
   *"make test"*|*"make ci-test"*|*"just test"*)
     is_test_runner=true ;;
@@ -897,6 +897,61 @@ Expected: OK
 ```bash
 git add -A features/prettier-hooks/ features/console-log-guard/
 git commit -m "refactor: remove prettier-hooks and console-log-guard (moved to /init-harness templates)"
+```
+
+---
+
+### Task 7.5: 既存ユーザーの移行パス（setup.sh --update 対応）
+
+**Files:**
+- Modify: `lib/update.sh`
+- Modify: `i18n/en/strings.sh`
+- Modify: `i18n/ja/strings.sh`
+
+- [ ] **Step 1: i18n/en/strings.sh に移行メッセージを追加**
+
+```bash
+STR_MIGRATION_HOOKS_TO_PROJECT="prettier-hooks and console-log-guard have moved to project-level configuration.\n   Run /init-harness in your project to set up equivalent hooks."
+```
+
+- [ ] **Step 2: i18n/ja/strings.sh に移行メッセージを追加**
+
+```bash
+STR_MIGRATION_HOOKS_TO_PROJECT="prettier-hooks と console-log-guard はプロジェクトレベルの設定に移行しました。\n   プロジェクトで /init-harness を実行して同等のフックを設定してください。"
+```
+
+- [ ] **Step 3: lib/update.sh に移行検出ロジックを追加**
+
+`run_update()` 関数内（設定復元後、ファイル更新前）に以下を追加:
+
+```bash
+# --- Migration: prettier-hooks / console-log-guard → project-level ---
+_migrated_hooks=false
+if [[ "${ENABLE_PRETTIER_HOOKS:-}" == "true" ]] || [[ "${ENABLE_CONSOLE_LOG_GUARD:-}" == "true" ]]; then
+  _migrated_hooks=true
+  # Clear the flags so they don't persist
+  ENABLE_PRETTIER_HOOKS="false"
+  ENABLE_CONSOLE_LOG_GUARD="false"
+fi
+
+# Show migration message after update completes
+if [[ "$_migrated_hooks" == "true" ]]; then
+  printf '\n%s\n\n' "${STR_MIGRATION_HOOKS_TO_PROJECT:-prettier-hooks and console-log-guard have moved to project-level. Run /init-harness in your project.}"
+fi
+```
+
+The exact insertion point is inside `run_update()`, after `_restore_config_from_manifest()` is called and before the settings.json rebuild. This ensures the old flags are read from the manifest, then cleared before the new settings.json is built (which no longer contains those features).
+
+- [ ] **Step 4: ShellCheck 検証**
+
+Run: `shellcheck -S warning lib/update.sh`
+Expected: エラーなし
+
+- [ ] **Step 5: コミット**
+
+```bash
+git add lib/update.sh i18n/en/strings.sh i18n/ja/strings.sh
+git commit -m "feat: add migration path for prettier-hooks/console-log-guard → project-level"
 ```
 
 ---
