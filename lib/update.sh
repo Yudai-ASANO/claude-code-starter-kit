@@ -518,6 +518,20 @@ run_update() {
   local updated_files=()
   local skipped_files=()
 
+  # --- Migration: prettier-hooks / console-log-guard → project-level ---
+  # Detect by inspecting the CURRENT deployed settings.json for hook entries
+  # that reference prettier or console.log patterns (does not depend on ENABLE_* flags).
+  local _current_settings_for_migration="${claude_dir}/settings.json"
+  local _migrated_hooks=false
+  if [[ -f "$_current_settings_for_migration" ]]; then
+    if jq -e '
+      .hooks.PostToolUse[]? |
+      select(.hooks[]?.command | test("prettier|console\\.log"))
+    ' "$_current_settings_for_migration" >/dev/null 2>&1; then
+      _migrated_hooks=true
+    fi
+  fi
+
   # --- Phase 1: settings.json ---
   info "$STR_UPDATE_SETTINGS"
 
@@ -581,6 +595,35 @@ run_update() {
     else
       ok "$STR_UPDATE_SETTINGS_UPDATED"
     fi
+  fi
+
+  # --- Migration: explicitly remove deprecated prettier/console-log hooks ---
+  if [[ "$_migrated_hooks" == "true" ]] && [[ -f "$current_settings" ]]; then
+    local _cleaned
+    _cleaned="$(jq '
+      if .hooks.PostToolUse then
+        .hooks.PostToolUse |= map(
+          select(
+            ((.matcher | test("ts\\|tsx\\|js\\|jsx")) and
+             (.hooks[]?.command | test("prettier --write"))) | not
+          )
+          | select(
+            ((.matcher | test("ts\\|tsx\\|js\\|jsx")) and
+             (.hooks[]?.command | test("console\\\\.log"))) | not
+          )
+        )
+      else . end
+      |
+      if .hooks.Stop then
+        .hooks.Stop |= map(
+          select(
+            ((.matcher == "*") and
+             (.hooks[]?.command | test("console\\\\.log")) and
+             (.hooks[]?.command | test("git diff --name-only"))) | not
+          )
+        )
+      else . end
+    ' "$current_settings")" && printf '%s\n' "$_cleaned" > "$current_settings"
   fi
 
   # Sync metadata variables from merged/deployed settings.json so that
@@ -707,6 +750,7 @@ run_update() {
     # Show skip notification with recovery info when files were skipped
     if [[ ${#skipped_files[@]} -gt 0 ]]; then
       info "${STR_UPDATE_SKIPPED_HINT:-Skipped files retain your changes. Kit updates for those files will apply on next update after you accept or reset.}"
+
       local backup_file="${claude_dir}/.starter-kit-last-backup"
       if [[ -f "$backup_file" ]]; then
         local _skip_backup
@@ -714,5 +758,10 @@ run_update() {
         info "To restore kit defaults: cp -a \"$_skip_backup\" ~/.claude"
       fi
     fi
+  fi
+
+  # Show migration message if old hooks were detected and removed
+  if [[ "$_migrated_hooks" == "true" ]]; then
+    warn "${STR_MIGRATION_HOOKS_TO_PROJECT:-prettier-hooks and console-log-guard have moved to project-level. Run /init-harness in your project.}"
   fi
 }

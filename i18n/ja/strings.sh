@@ -253,4 +253,6 @@ STR_EXISTING_CLAUDE_NONINTERACTIVE="非対話モードが指定されている�
 STR_EXISTING_CLAUDE_CONFIRM="バックアップ付き再構成フローを続行しますか？ [y/N]"
 STR_EXISTING_CLAUDE_CANCEL="既存の ~/.claude 設定を変更する前にセットアップを中止しました。"
 
+STR_MIGRATION_HOOKS_TO_PROJECT="prettier-hooks と console-log-guard はプロジェクトレベルの設定に移行しました。\n   プロジェクトで /init-harness を実行して同等のフックを設定してください。"
+
 # Errors

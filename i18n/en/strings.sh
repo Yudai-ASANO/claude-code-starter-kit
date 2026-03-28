@@ -255,4 +255,6 @@ STR_EXISTING_CLAUDE_NONINTERACTIVE="Continuing automatically because non-interac
 STR_EXISTING_CLAUDE_CONFIRM="Continue with backup-and-reconfigure flow? [y/N]"
 STR_EXISTING_CLAUDE_CANCEL="Setup canceled before modifying the existing ~/.claude configuration."
 
+STR_MIGRATION_HOOKS_TO_PROJECT="prettier-hooks and console-log-guard have moved to project-level configuration.\n   Run /init-harness in your project to set up equivalent hooks."
+
 # Errors
