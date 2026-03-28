@@ -349,65 +349,22 @@ cd claude-code-starter-kit
 
 ```
 1. 言語選択        → 日本語 or English
-2. プロファイル    → Minimal / Standard / Full / Custom
-3. Codex MCP       → 外部AIツール連携（わからなければ「いいえ」でOK）
-4. 新しい /init    → Claude Code の対話型 /init を使うか（Custom のみ）
-5. エディタ        → VS Code / Cursor / Zed / Neovim / なし
-6. Ghostty         → ターミナルアプリの自動設定（macOS のみ・Full/Custom）
-7. フック          → 安全装置の選択
-8. プラグイン      → 追加機能の選択
-9. Claude Code 帰属 → コミットとPRの帰属表示を残すか
-10. 確認・デプロイ → 設定内容を確認して実行
+2. Codex MCP       → 外部AIツール連携（わからなければ「いいえ」でOK）
+3. エディタ        → VS Code / Cursor / Zed / Neovim / なし
+4. フック          → 安全装置の選択
+5. プラグイン      → 追加機能の選択
+6. Claude Code 帰属 → コミットとPRの帰属表示を残すか
+7. 確認・デプロイ → 設定内容を確認して実行
 ```
 
-> **迷ったら？** すべての質問には「おすすめ」のマークが付いています。
-> 何を選べばいいかわからない場合は、**Standard プロファイル** を選べば間違いありません。
+> **迷ったら？** すべての質問には「おすすめ」のマークが付いています。デフォルトのまま進めれば問題ありません。
 
 > **エディタの質問について**: ステップ 4 で「どのエディタを使っていますか？」と聞かれます。
 > これは git push レビューフック（コードを共有する前にエディタで差分を確認する機能）のための設定です。
 > **エディタをインストールしていない場合や、わからない場合は「5) なし」を選んでください。** Claude Code の動作には影響しません。
 > エディタの詳細は「[エディタ（コードエディタ）とは？](#エディタコードエディタとは)」をご覧ください。
 
-> **選択肢がどこに反映されるか知りたい場合**: 詳細は [ウィザード設定と反映先の対応表](docs/wizard-config-mapping.md) を参照してください。`PROFILE` のように preset として使われる項目と、`settings.json` に直接書かれる項目を分けて確認できます。
->
-> **新しい /init について**: `Minimal` `Standard` `Full` では Claude Code の新しい対話型 `/init` を既定で有効にします。`Custom` では有効化するかどうかを選べます。
-
----
-
-## 🎛️ プロファイルの選び方
-
-プロファイルとは「どのくらいの機能を入れるか」を決めるプリセット（お決まりセット）です。
-
-### Minimal（ミニマル）
-
-- **おすすめ**: まずは軽く試してみたい人
-- **含まれるもの**: エージェントとルールだけ
-- **特徴**: 軽量でシンプル
-
-### Standard（スタンダード）⭐ おすすめ
-
-- **おすすめ**: ほとんどの人に最適
-- **含まれるもの**: エージェント、ルール、コマンド、スキル、主要なフック、メモリ
-- **特徴**: バランスの良い定番セット
-
-### Full（フル）
-
-- **おすすめ**: すべての機能を使いたい人
-- **含まれるもの**: 上記すべて + 全フック + Codex MCP + Ghostty セットアップ（macOS のみ）
-- **特徴**: フル装備
-
-| 機能 | Minimal | Standard | Full |
-|---|:---:|:---:|:---:|
-| エージェント（AI アシスタント） | ✅ | ✅ | ✅ |
-| ルール（コーディング規約） | ✅ | ✅ | ✅ |
-| コマンド（ショートカット） | - | ✅ | ✅ |
-| スキル（専門知識） | - | ✅ | ✅ |
-| フック（安全装置） | - | 主要（11個） | 全部（12個） |
-| メモリ（記憶の永続化） | - | ✅ | ✅ |
-| プラグイン（拡張機能） | - | 10個 | 14個 |
-| フォント（IBM Plex Mono / HackGen NF） | - | ✅ | ✅ |
-| Codex MCP（外部 AI 連携） | - | 任意 | ✅ |
-| Ghostty（ターミナル設定） | - | - | macOS のみ |
+> **選択肢がどこに反映されるか知りたい場合**: 詳細は [ウィザード設定と反映先の対応表](docs/wizard-config-mapping.md) を参照してください。`settings.json` に直接書かれる項目を確認できます。
 
 ---
 
@@ -803,16 +760,16 @@ curl -fsSL https://raw.githubusercontent.com/cloudnative-co/claude-code-starter-
 NONINTERACTIVE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/cloudnative-co/claude-code-starter-kit/main/install.sh)"
 ```
 
-> Standard プロファイルのデフォルト設定で自動セットアップします。
+> デフォルト設定で自動セットアップします。
 > プラグイン（複数マーケットプレイス対応）もすべて自動でインストールされます。
 
 ### 基本的な使い方
 
 ```bash
-./setup.sh --non-interactive --profile=standard --language=ja --editor=vscode
+./setup.sh --non-interactive --language=ja --editor=vscode
 ```
 
-> Standard プロファイル、日本語、VS Code エディタで自動セットアップします。
+> 日本語、VS Code エディタで自動セットアップします。
 
 ### Ghostty も一緒にセットアップ（macOS のみ）
 
@@ -826,7 +783,6 @@ NONINTERACTIVE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/cloudna
 
 ```bash
 ./setup.sh --non-interactive \
-  --profile=standard \
   --language=ja \
   --editor=cursor \
   --new-init=true \
@@ -841,7 +797,6 @@ NONINTERACTIVE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/cloudna
 > 衝突しないプラグインは従来通り名前だけで指定できます（例: `security-guidance`）。
 >
 > **補足**:
-> - `--profile` は最終設定の 1 キーではなく、個別フラグの初期値セットを選ぶための指定です
 > - `--new-init=true` は Claude Code の新しい対話型 `/init` を有効にします
 > - `--commit-attribution=false` はコミットと PR の Claude Code 帰属表示を両方オフにします
 > - 詳細な反映先は [ウィザード設定と反映先の対応表](docs/wizard-config-mapping.md) を参照してください
@@ -1062,10 +1017,6 @@ claude-code-starter-kit/
 │   ├── wizard.sh           # ウィザードのロジック
 │   └── defaults.conf       # デフォルト設定値
 ├── config/                 # 設定テンプレート
-├── profiles/               # プロファイル定義
-│   ├── minimal.conf        # Minimal プロファイル
-│   ├── standard.conf       # Standard プロファイル
-│   └── full.conf           # Full プロファイル
 ├── features/               # オプション機能
 │   ├── ghostty/            # Ghostty ターミナル設定（macOS のみ）
 │   └── .../                # 各種フック定義

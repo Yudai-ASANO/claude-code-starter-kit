@@ -400,8 +400,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Added
 - **初回リリース**: Claude Code Starter Kit
-- **対話型ウィザード** (`wizard/wizard.sh`): 言語・プロファイル・エディタ・フック・プラグインを対話形式で選択
-- **3 プロファイル**: Minimal / Standard / Full
+- **対話型ウィザード** (`wizard/wizard.sh`): 言語・エディタ・フック・プラグインを対話形式で選択
 - **9 エージェント**: planner, architect, tdd-guide, code-reviewer, security-reviewer, build-error-resolver, e2e-runner, refactor-cleaner, doc-updater
 - **8 ルール**: coding-style, git-workflow, hooks, patterns, performance, security, testing, agents
 - **14 スラッシュコマンド**: /plan, /tdd, /build-fix, /code-review, /e2e, /verify, /checkpoint 等

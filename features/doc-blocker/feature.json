@@ -4,7 +4,6 @@
   "description": "Block creation of random .md/.txt files to keep docs consolidated",
   "category": "hook",
   "default": false,
-  "profiles": { "minimal": false, "standard": false, "full": true },
   "dependencies": [],
   "conflicts": []
 }

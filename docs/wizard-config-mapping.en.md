@@ -8,14 +8,13 @@ There are three broad categories of config in this starter kit.
 2. Values used by deployment or extra setup steps
 3. Values stored mainly for presets, manifests, or future re-runs
 
-Not every saved value is supposed to appear in `settings.json`. In particular, `PROFILE` and `INSTALL_*` mostly control defaults and file deployment rather than final JSON output.
+Not every saved value is supposed to appear in `settings.json`. In particular, `INSTALL_*` flags mostly control defaults and file deployment rather than final JSON output.
 
 ## Wizard Steps
 
 | Step | Saved key / CLI | What it controls | Main destination | Visible in `settings.json` |
 |---|---|---|---|---|
 | Language | `LANGUAGE` / `--language` | UI language and generated language settings | `settings.json`, `CLAUDE.md`, i18n loading | Yes |
-| Profile | `PROFILE` / `--profile` | Preset bundle for other defaults | wizard initialization, manifest | No |
 | Codex MCP | `ENABLE_CODEX_MCP` / `--codex-mcp` | Whether to run Codex CLI auth and Claude MCP registration | Codex MCP setup in `setup.sh` | No |
 | New `/init` | `ENABLE_NEW_INIT` / `--new-init` | Enable Claude Code's interactive `/init` flow | `settings.json` `env.CLAUDE_CODE_NEW_INIT` | Yes |
 | Editor | `EDITOR_CHOICE` / `--editor` | Editor command for the git push review hook | Hook template substitution, manifest | Indirectly |
@@ -30,8 +29,7 @@ Not every saved value is supposed to appear in `settings.json`. In particular, `
 | Key | Purpose | Main destination | Notes |
 |---|---|---|---|
 | `LANGUAGE` | UI and generated file language | `settings.json`, `CLAUDE.md`, i18n | Currently written as `English` or `日本語` |
-| `PROFILE` | Minimal / Standard / Full / Custom preset | Wizard defaults, manifest | Expanded into lower-level flags during setup |
-| `ENABLE_NEW_INIT` | Claude Code's new interactive `/init` mode | `settings.json` `env.CLAUDE_CODE_NEW_INIT` | Defaults to `true` for Minimal, Standard, and Full; Custom asks explicitly |
+| `ENABLE_NEW_INIT` | Claude Code's new interactive `/init` mode | `settings.json` `env.CLAUDE_CODE_NEW_INIT` | Defaults to `true` |
 | `EDITOR_CHOICE` | Editor command for git push review | `features/git-push-review/hooks.json` | Use `none` if you do not want editor integration |
 | `COMMIT_ATTRIBUTION` | Claude Code attribution on or off | `settings.json` `attribution.commit`, `attribution.pr` | `false` clears both commit and PR attribution |
 | `ENABLE_CODEX_MCP` | Run Codex MCP setup or skip it | Codex CLI auth and `claude mcp add` | A setup action, not a JSON setting |
@@ -70,10 +68,6 @@ These flags are used to merge the corresponding `features/*/hooks.json` fragment
 | `ENABLE_DOC_SIZE_GUARD` | Doc Size Guard | Warn when `CLAUDE.md` / `AGENTS.md` is too large | Yes |
 
 ## Common Misunderstandings
-
-### `PROFILE` does not appear in the final config
-
-That is expected. `PROFILE` is a preset name used to seed lower-level choices, not a top-level runtime setting.
 
 ### `SELECTED_PLUGINS` is not visible in `settings.json`
 

@@ -8,14 +8,6 @@ STR_BANNER_SUB="Interactive Environment Setup"
 
 # Step 1: Language (shown before strings are loaded)
 
-# Step 2: Profile
-STR_PROFILE_TITLE="Choose a configuration profile:"
-STR_PROFILE_MINIMAL="Minimal - Agents + rules only (lightweight)"
-STR_PROFILE_STANDARD="Standard - Agents + rules + commands + skills + core hooks"
-STR_PROFILE_FULL="Full - Everything enabled including all hooks, Codex MCP, and Ghostty setup"
-STR_PROFILE_FULL_NO_GHOSTTY="Full - Everything enabled including all hooks and Codex MCP"
-STR_PROFILE_CUSTOM="Custom - Choose individual components"
-
 # Step 3: Codex MCP
 STR_CODEX_TITLE="Do you use OpenAI Codex MCP as a sub-agent?"
 STR_CODEX_YES="Yes - Include Codex MCP delegation rules in CLAUDE.md"
@@ -23,7 +15,7 @@ STR_CODEX_NO="No - Skip (you can add this later)"
 
 # Step 3.5: New /init
 STR_NEW_INIT_TITLE="Enable Claude Code's new interactive /init mode?"
-STR_NEW_INIT_DESC="When enabled, /init can propose initial setup for CLAUDE.md, skills, and hooks. It is enabled by default for Minimal, Standard, and Full profiles."
+STR_NEW_INIT_DESC="When enabled, /init can propose initial setup for CLAUDE.md, skills, and hooks. It is enabled by default."
 STR_NEW_INIT_YES="Yes - Use the interactive /init flow"
 STR_NEW_INIT_NO="No - Keep the previous /init behavior"
 
@@ -104,7 +96,6 @@ STR_COMMIT_NO="Hide Claude Code attribution in commits and PRs"
 # Step 8: Confirm
 STR_CONFIRM_TITLE="Configuration Summary"
 STR_CONFIRM_LANGUAGE="Language"
-STR_CONFIRM_PROFILE="Profile"
 STR_CONFIRM_NEW_INIT="New /init"
 STR_CONFIRM_CODEX="Codex MCP"
 STR_CONFIRM_EDITOR="Editor"

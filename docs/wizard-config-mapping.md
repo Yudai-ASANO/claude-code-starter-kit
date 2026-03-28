@@ -8,14 +8,13 @@
 2. ファイル配置や追加セットアップ処理に使われるもの
 3. プリセットや manifest のように、次回実行や内部管理のために保持されるもの
 
-`settings.json` に見えないから未使用、とは限りません。特に `PROFILE` や `INSTALL_*` は、結果ファイルよりも配置処理や初期値の決定に効く項目です。
+`settings.json` に見えないから未使用、とは限りません。特に `INSTALL_*` は、結果ファイルよりも配置処理や初期値の決定に効く項目です。
 
 ## ウィザードの各ステップ
 
 | ステップ | 保存キー / CLI | 何に効くか | 主な反映先 | `settings.json` に見えるか |
 |---|---|---|---|---|
 | 言語 | `LANGUAGE` / `--language` | 表示言語と生成物の言語設定 | `settings.json`, `CLAUDE.md`, i18n 読み込み | はい |
-| プロファイル | `PROFILE` / `--profile` | 個別フラグの初期値セットを決める | `wizard` の初期化, manifest | いいえ |
 | Codex MCP | `ENABLE_CODEX_MCP` / `--codex-mcp` | Codex CLI 認証と Claude MCP 登録を行うか | `setup.sh` の Codex MCP セットアップ | いいえ |
 | 新しい `/init` | `ENABLE_NEW_INIT` / `--new-init` | Claude Code の対話型 `/init` を有効にする | `settings.json` の `env.CLAUDE_CODE_NEW_INIT` | はい |
 | エディタ | `EDITOR_CHOICE` / `--editor` | git push review hook で使うエディタ差分表示コマンド | `hooks.json` の差し込み, manifest | 間接的 |
@@ -30,8 +29,7 @@
 | キー | 用途 | 主な反映先 | 備考 |
 |---|---|---|---|
 | `LANGUAGE` | UI 表示言語と生成物の言語 | `settings.json`, `CLAUDE.md`, i18n | 現在は `日本語` / `English` を設定 |
-| `PROFILE` | Minimal / Standard / Full / Custom の初期値選択 | `wizard` のデフォルト展開, manifest | 実際の挙動は個別フラグへ展開される |
-| `ENABLE_NEW_INIT` | Claude Code の新しい `/init` 対話モード | `settings.json` の `env.CLAUDE_CODE_NEW_INIT` | Minimal / Standard / Full は既定 `true`、Custom では選択式 |
+| `ENABLE_NEW_INIT` | Claude Code の新しい `/init` 対話モード | `settings.json` の `env.CLAUDE_CODE_NEW_INIT` | 既定で `true` |
 | `EDITOR_CHOICE` | git push review hook のエディタコマンド | `features/git-push-review/hooks.json` | エディタを使わない場合は `none` |
 | `COMMIT_ATTRIBUTION` | Claude Code 帰属の表示有無 | `settings.json` の `attribution.commit`, `attribution.pr` | `false` で commit / PR 両方の帰属表示を空文字にする |
 | `ENABLE_CODEX_MCP` | Codex MCP セットアップ実行可否 | Codex CLI 認証と `claude mcp add` | 反映は `settings.json` ではなく外部セットアップ |
@@ -70,10 +68,6 @@
 | `ENABLE_DOC_SIZE_GUARD` | Doc Size Guard | 大きすぎる `CLAUDE.md` / `AGENTS.md` を警告 | はい |
 
 ## よくある誤解
-
-### `PROFILE` が最終設定に見えない
-
-正常です。`PROFILE` は preset 名を直接使うのではなく、インストール対象、フック、プラグインなどの初期値へ展開されます。
 
 ### `SELECTED_PLUGINS` が `settings.json` に見えない
 

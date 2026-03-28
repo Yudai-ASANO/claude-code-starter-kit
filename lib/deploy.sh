@@ -610,7 +610,6 @@ write_manifest() {
     --arg ts "$ts" \
     --arg kit_version "$kit_version" \
     --arg kit_commit "$kit_commit" \
-    --arg profile "${PROFILE:-}" \
     --arg language "${LANGUAGE:-}" \
     --arg editor "${EDITOR_CHOICE:-}" \
     --arg commit_attribution "${COMMIT_ATTRIBUTION:-}" \
@@ -623,7 +622,6 @@ write_manifest() {
       timestamp: $ts,
       kit_version: $kit_version,
       kit_commit: $kit_commit,
-      profile: $profile,
       language: $language,
       editor: $editor,
       commit_attribution: $commit_attribution,

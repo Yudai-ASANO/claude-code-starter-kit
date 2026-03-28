@@ -22,7 +22,7 @@ printf "\n── Claude Code Starter Kit: Scenario Tests ──\n\n"
 test_fresh_install_clean() {
   setup_test_env
   local rc=0
-  run_setup --profile=minimal >/dev/null 2>&1 || rc=$?
+  run_setup >/dev/null 2>&1 || rc=$?
 
   if [[ $rc -eq 0 ]] \
     && assert_file_exists "$CLAUDE_DIR/settings.json" \
@@ -45,7 +45,7 @@ test_fresh_install_existing() {
   setup_test_env
   install_fixture "no-manifest"
   local rc=0
-  run_setup --profile=minimal >/dev/null 2>&1 || rc=$?
+  run_setup >/dev/null 2>&1 || rc=$?
 
   if [[ $rc -eq 0 ]] \
     && assert_file_exists "$CLAUDE_DIR/settings.json" \
@@ -66,7 +66,7 @@ test_fresh_install_existing() {
 # --- 3. update-no-changes ---
 test_update_no_changes() {
   setup_test_env
-  run_setup --profile=minimal >/dev/null 2>&1 || { fail "update-no-changes (setup failed)"; teardown_test_env; return; }
+  run_setup >/dev/null 2>&1 || { fail "update-no-changes (setup failed)"; teardown_test_env; return; }
   # Capture settings before update
   local before_settings
   before_settings="$(cat "$CLAUDE_DIR/settings.json")"
@@ -89,7 +89,7 @@ test_update_no_changes() {
 # --- 4. update-kit-changed ---
 test_update_kit_changed() {
   setup_test_env
-  run_setup --profile=minimal >/dev/null 2>&1
+  run_setup >/dev/null 2>&1
   # Add a marker to current settings.json that the kit would NOT produce
   jq '.old_version_marker = true' "$CLAUDE_DIR/settings.json" > "$CLAUDE_DIR/settings.json.tmp" \
     && mv "$CLAUDE_DIR/settings.json.tmp" "$CLAUDE_DIR/settings.json"
@@ -126,7 +126,7 @@ test_update_kit_changed() {
 # --- 5. update-user-changed ---
 test_update_user_changed() {
   setup_test_env
-  run_setup --profile=minimal >/dev/null 2>&1
+  run_setup >/dev/null 2>&1
   # Simulate user change: modify current settings.json
   jq '.user_custom_key = "my_value"' "$CLAUDE_DIR/settings.json" > "$CLAUDE_DIR/settings.json.tmp" \
     && mv "$CLAUDE_DIR/settings.json.tmp" "$CLAUDE_DIR/settings.json"
@@ -147,10 +147,10 @@ test_update_user_changed() {
 # --- 6. update-feature-toggle ---
 test_update_feature_toggle() {
   setup_test_env
-  run_setup --profile=standard >/dev/null 2>&1
-  # Update with minimal profile (fewer features)
+  run_setup >/dev/null 2>&1
+  # Update with same settings
   local rc=0
-  run_setup_update --profile=minimal >/dev/null 2>&1 || rc=$?
+  run_setup_update >/dev/null 2>&1 || rc=$?
 
   # After update, settings and manifest should still exist
   if [[ $rc -eq 0 ]] \
@@ -187,7 +187,7 @@ test_claudemd_migration() {
 # --- 8. claudemd-section-preserve ---
 test_claudemd_section_preserve() {
   setup_test_env
-  run_setup --profile=minimal >/dev/null 2>&1
+  run_setup >/dev/null 2>&1
   # Add user content to user section
   printf "\n## My Custom Rules\n- Always be nice\n" >> "$CLAUDE_DIR/CLAUDE.md"
   local rc=0
@@ -207,7 +207,7 @@ test_claudemd_section_preserve() {
 # --- 9. claudemd-kit-edit-conflict ---
 test_claudemd_kit_edit_conflict() {
   setup_test_env
-  run_setup --profile=minimal >/dev/null 2>&1
+  run_setup >/dev/null 2>&1
   # Edit the kit section (between markers)
   local md="$CLAUDE_DIR/CLAUDE.md"
   if [[ -f "$md" ]]; then
@@ -233,7 +233,7 @@ test_claudemd_kit_edit_conflict() {
 # --- 10. dry-run-no-mutation ---
 test_dry_run_no_mutation() {
   setup_test_env
-  run_setup --profile=minimal >/dev/null 2>&1
+  run_setup >/dev/null 2>&1
   # Take checksum before dry-run
   local before after rc_dr=0
   before="$(snapshot_dir_checksum "$CLAUDE_DIR")"
@@ -253,7 +253,7 @@ test_dry_run_no_mutation() {
 # --- 11. uninstall-preserve-user ---
 test_uninstall_preserve_user() {
   setup_test_env
-  run_setup --profile=minimal >/dev/null 2>&1
+  run_setup >/dev/null 2>&1
   # Add user content to CLAUDE.md user section
   printf "\n## My Precious Notes\nDo not delete this.\n" >> "$CLAUDE_DIR/CLAUDE.md"
   run_uninstall >/dev/null 2>&1 || true
@@ -273,7 +273,7 @@ test_uninstall_preserve_user() {
 # --- 12. snapshot-baseline ---
 test_snapshot_baseline() {
   setup_test_env
-  run_setup --profile=minimal >/dev/null 2>&1
+  run_setup >/dev/null 2>&1
 
   if assert_file_exists "$CLAUDE_DIR/.starter-kit-snapshot/settings.json" \
     && assert_dir_exists "$CLAUDE_DIR/.starter-kit-snapshot"; then
@@ -294,7 +294,7 @@ test_snapshot_baseline() {
 # --- 13. merge-prefs-persist ---
 test_merge_prefs_persist() {
   setup_test_env
-  run_setup --profile=minimal >/dev/null 2>&1
+  run_setup >/dev/null 2>&1
 
   # Create a merge prefs file (matches actual format: key → "keep-mine" or "use-kit")
   printf '{"settings.json/permissions":"keep-mine"}' > "$CLAUDE_DIR/.starter-kit-merge-prefs.json"
@@ -513,7 +513,7 @@ test_bash_reexec() {
   # (which may be Bash 4+ already — the re-exec would be a no-op)
   setup_test_env
   local rc=0
-  run_setup --profile=minimal >/dev/null 2>&1 || rc=$?
+  run_setup >/dev/null 2>&1 || rc=$?
 
   if [[ $rc -eq 0 ]] \
     && assert_file_exists "$CLAUDE_DIR/settings.json" \
@@ -589,7 +589,7 @@ test_snapshot_format_v020_compat() {
 # --- 27. update-partial-failure-recovery ---
 test_update_partial_failure_recovery() {
   setup_test_env
-  run_setup --profile=minimal >/dev/null 2>&1
+  run_setup >/dev/null 2>&1
 
   # Run update which should create a backup via backup_existing()
   run_setup_update >/dev/null 2>&1 || true
@@ -656,7 +656,7 @@ test_bash4_noninteractive_unavailable() {
     else
       # No Bash 4+ available + non-interactive → should get error
       local rc=0
-      run_setup --profile=minimal >/dev/null 2>&1 || rc=$?
+      run_setup >/dev/null 2>&1 || rc=$?
       if [[ $rc -ne 0 ]]; then
         pass "bash4-noninteractive-unavailable"
       else
@@ -670,7 +670,7 @@ test_bash4_noninteractive_unavailable() {
 # --- 29. snapshot-double-marker-repair ---
 test_snapshot_double_marker_repair() {
   setup_test_env
-  run_setup --profile=minimal >/dev/null 2>&1
+  run_setup >/dev/null 2>&1
 
   local snapshot_claude="$CLAUDE_DIR/.starter-kit-snapshot/CLAUDE.md"
   if [[ ! -f "$snapshot_claude" ]]; then

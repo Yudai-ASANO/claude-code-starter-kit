@@ -4,11 +4,6 @@
   "description": "Automatically check for and apply starter kit updates on session start",
   "category": "hook",
   "default": true,
-  "profiles": {
-    "minimal": false,
-    "standard": true,
-    "full": true
-  },
   "dependencies": [],
   "conflicts": [],
   "hasScripts": true

@@ -55,7 +55,7 @@ trap 'teardown_test_env' EXIT
 # run_setup - Run setup.sh with given args in the test environment
 #
 # Usage: run_setup [args...]
-# Does NOT hardcode --profile; caller must pass it if needed.
+# Runs setup.sh in non-interactive mode with English language.
 # Returns the exit code of setup.sh
 # ---------------------------------------------------------------------------
 run_setup() {

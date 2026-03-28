@@ -4,7 +4,6 @@
   "description": "Pause before git push to review changes",
   "category": "hook",
   "default": true,
-  "profiles": { "minimal": false, "standard": true, "full": true },
   "dependencies": [],
   "conflicts": []
 }

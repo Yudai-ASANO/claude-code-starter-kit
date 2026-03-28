@@ -23,14 +23,6 @@ STR_EDITOR_ZED="Zed"
 STR_EDITOR_NEOVIM="Neovim"
 # shellcheck disable=SC2034
 STR_EDITOR_NONE="None"
-# shellcheck disable=SC2034
-STR_PROFILE_MINIMAL="Minimal"
-# shellcheck disable=SC2034
-STR_PROFILE_STANDARD="Standard"
-# shellcheck disable=SC2034
-STR_PROFILE_FULL="Full"
-# shellcheck disable=SC2034
-STR_PROFILE_CUSTOM="Custom"
 
 # shellcheck source=wizard/wizard.sh
 source "$PROJECT_DIR/wizard/wizard.sh"
@@ -108,15 +100,15 @@ fi
 
 # Test: parses valid config file with allowlisted keys
 _tmp="$(mktemp)"
-printf 'LANGUAGE="en"\nPROFILE="standard"\n' > "$_tmp"
+printf 'LANGUAGE="en"\nEDITOR_CHOICE="vscode"\n' > "$_tmp"
 # Clear variables first
 LANGUAGE=""
-PROFILE=""
+EDITOR_CHOICE=""
 run_func _safe_source_config "$_tmp"
-if assert_equals "en" "$LANGUAGE" && assert_equals "standard" "$PROFILE"; then
+if assert_equals "en" "$LANGUAGE" && assert_equals "vscode" "$EDITOR_CHOICE"; then
   pass "wizard: _safe_source_config parses allowlisted key=value pairs"
 else
-  fail "wizard: _safe_source_config parse failed (LANGUAGE='$LANGUAGE', PROFILE='$PROFILE')"
+  fail "wizard: _safe_source_config parse failed (LANGUAGE='$LANGUAGE', EDITOR_CHOICE='$EDITOR_CHOICE')"
 fi
 rm -f "$_tmp"
 
@@ -139,11 +131,11 @@ rm -f "$_tmp"
 
 # Test: skips comments and blank lines
 _tmp="$(mktemp)"
-printf '# This is a comment\n\nLANGUAGE="en"\n  # Another comment\nPROFILE="full"\n' > "$_tmp"
+printf '# This is a comment\n\nLANGUAGE="en"\n  # Another comment\nEDITOR_CHOICE="cursor"\n' > "$_tmp"
 LANGUAGE=""
-PROFILE=""
+EDITOR_CHOICE=""
 run_func _safe_source_config "$_tmp"
-if assert_equals "en" "$LANGUAGE" && assert_equals "full" "$PROFILE"; then
+if assert_equals "en" "$LANGUAGE" && assert_equals "cursor" "$EDITOR_CHOICE"; then
   pass "wizard: _safe_source_config skips comments and blank lines"
 else
   fail "wizard: _safe_source_config did not skip comments properly"

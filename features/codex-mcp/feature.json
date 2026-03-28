@@ -4,7 +4,6 @@
   "description": "Delegate tasks to OpenAI Codex MCP as a sub-agent",
   "category": "integration",
   "default": false,
-  "profiles": { "minimal": false, "standard": false, "full": true },
   "dependencies": [],
   "conflicts": []
 }

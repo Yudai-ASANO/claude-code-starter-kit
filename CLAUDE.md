@@ -13,7 +13,7 @@ Claude Code Starter Kit — a shell-based toolkit that bootstraps a complete Cla
 bash setup.sh
 
 # Non-interactive setup
-bash setup.sh --non-interactive --profile=standard --language=en --editor=vscode
+bash setup.sh --non-interactive --language=en --editor=vscode
 
 # Dry-run (preview changes without modifying files)
 bash setup.sh --dry-run
@@ -22,7 +22,7 @@ bash setup.sh --update --dry-run
 # One-liner install (interactive)
 curl -fsSL https://raw.githubusercontent.com/cloudnative-co/claude-code-starter-kit/main/install.sh | bash
 
-# One-liner install (non-interactive, standard profile + all default plugins)
+# One-liner install (non-interactive, all default plugins)
 curl -fsSL https://raw.githubusercontent.com/cloudnative-co/claude-code-starter-kit/main/install.sh | bash -s -- --non-interactive
 NONINTERACTIVE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/cloudnative-co/claude-code-starter-kit/main/install.sh)"
 
@@ -83,13 +83,6 @@ install.sh (re-run with manifest v2 + snapshot)
 
 Libraries sourced by `setup.sh` in order: `wizard/wizard.sh`, `lib/colors.sh`, `lib/detect.sh`, `lib/prerequisites.sh`, `lib/features.sh`, `lib/template.sh`, `lib/json-builder.sh`, `lib/snapshot.sh`, `lib/merge.sh`, `lib/update.sh`, `lib/dryrun.sh`, `lib/deploy.sh`, `lib/ghostty.sh`, `lib/fonts.sh`.
 
-### Profile System
-
-Three profiles (`profiles/*.conf`) define feature toggles as `VAR=true/false`:
-- **minimal** — agents + rules only
-- **standard** — adds commands, skills, memory, core hooks, Ghostty (macOS), programming fonts
-- **full** — everything including Codex MCP
-
 ### i18n
 
 `load_strings "$LANGUAGE"` sources `i18n/{en,ja}/strings.sh`. All UI text uses `STR_*` variables. Each language also has `i18n/{en,ja}/CLAUDE.md.base` as templates for the user's assembled CLAUDE.md.
@@ -103,11 +96,11 @@ Three profiles (`profiles/*.conf`) define feature toggles as `VAR=true/false`:
 
 ### Plugin System
 
-`config/plugins.json` defines available plugins with profile assignments and a `marketplaces` mapping. Each plugin has a `name`, `marketplace` (defaults to `claude-plugins-official`), `description`, and `profiles` array. The top-level `marketplaces` object maps marketplace short names to GitHub repos (e.g., `"claude-plugins-official": "anthropics/claude-plugins-official"`).
+`config/plugins.json` defines available plugins and a `marketplaces` mapping. Each plugin has a `name`, `marketplace` (defaults to `claude-plugins-official`), and `description`. The top-level `marketplaces` object maps marketplace short names to GitHub repos (e.g., `"claude-plugins-official": "anthropics/claude-plugins-official"`).
 
 **Multi-marketplace support**: When the same plugin name exists in multiple marketplaces (e.g., `pr-review-toolkit` in both `claude-plugins-official` and `claude-code-plugins`), `_plugin_has_collision()` detects the conflict and `_compute_selected_plugins()` produces qualified `name@marketplace` entries in `SELECTED_PLUGINS`. Bare names without collision remain unqualified for backward compatibility. `_apply_plugins_from_csv()` handles both `name@marketplace` (exact match) and bare names (collision → defaults to `claude-plugins-official`).
 
-Wizard flow: `_load_plugins()` reads the JSON (including `PLUGIN_MARKETPLACES[]` parallel array) → `_init_plugins_for_profile()` pre-selects plugins based on the chosen profile → user can customize in interactive mode (colliding names show `[marketplace]` suffix) → `_compute_selected_plugins()` produces the final `SELECTED_PLUGINS` CSV → `setup.sh` parses `name@marketplace`, registers required marketplaces via `claude plugin marketplace add`, and installs via `claude plugin install`.
+Wizard flow: `_load_plugins()` reads the JSON (including `PLUGIN_MARKETPLACES[]` parallel array) → all plugins are selected by default → user can customize in interactive mode (colliding names show `[marketplace]` suffix) → `_compute_selected_plugins()` produces the final `SELECTED_PLUGINS` CSV → `setup.sh` parses `name@marketplace`, registers required marketplaces via `claude plugin marketplace add`, and installs via `claude plugin install`.
 
 ### Hook Fragment Assembly
 
@@ -295,7 +288,7 @@ The permissions file implements a defense-in-depth strategy against prompt injec
 ## Versioning
 
 - **patch (x.y.Z)**: バグ修正、ドキュメント修正、テスト追加、内部リファクタ（ユーザーの動作が変わらない）
-- **minor (x.Y.0)**: 新機能追加、既存機能の動作変更、新 profile 項目、新 hook/command/skill 追加
+- **minor (x.Y.0)**: 新機能追加、既存機能の動作変更、新 hook/command/skill 追加
 - **major (X.0.0)**: 破壊的変更（設定フォーマット変更、既存 config の非互換、migration 必須）
 - PR の CHANGELOG エントリに `## [x.y.z] - YYYY-MM-DD` を書く。タグはマージ後に切る。
 - 複数の変更を含む PR はもっとも影響の大きい変更に合わせる。
@@ -303,19 +296,18 @@ The permissions file implements a defense-in-depth strategy against prompt injec
 ## Adding a New Feature
 
 1. Create `features/new-feature/feature.json` (metadata) and `hooks.json` (hook fragments and/or top-level settings). **Hook types MUST be nested inside `"hooks": {}`** — see "Hook Fragment Assembly" above
-2. Add `ENABLE_NEW_FEATURE=true/false` to each `profiles/*.conf`
-3. In `wizard/wizard.sh`: add variable initialization (`ENABLE_NEW_FEATURE="${ENABLE_NEW_FEATURE:-}"`), add to `_CONFIG_ALLOWED_KEYS`, add to `save_config()`, add confirmation display in `_step_confirm`, add default in `_fill_noninteractive_defaults()`
-4. Add `STR_CONFIRM_*` strings in both `i18n/en/strings.sh` and `i18n/ja/strings.sh`
-5. If the feature is a hook, add to `HOOK_KEYS` array and `_apply_hooks_csv()` case in `wizard/wizard.sh`, and add `STR_HOOKS_*` strings in both i18n files. Add the hook label to `HOOK_LABELS` arrays in both `_step_hooks()` and `_step_confirm()`
-6. Features are auto-collected by `build_settings_file()` in `lib/deploy.sh` via `_FEATURE_ORDER` / `_FEATURE_FLAGS` registry — no manual merge code needed
-7. If external scripts needed: add to `deploy_hook_scripts()` in `setup.sh`
-8. If the feature creates files outside the standard manifest-tracked directories, add explicit cleanup to `uninstall.sh`
-9. Verify update-path adoption. A new key must be checked in all of these paths:
+2. In `wizard/wizard.sh`: add variable initialization (`ENABLE_NEW_FEATURE="${ENABLE_NEW_FEATURE:-}"`), add to `_CONFIG_ALLOWED_KEYS`, add to `save_config()`, add confirmation display in `_step_confirm`, add default in `_fill_noninteractive_defaults()`
+3. Add `STR_CONFIRM_*` strings in both `i18n/en/strings.sh` and `i18n/ja/strings.sh`
+4. If the feature is a hook, add to `HOOK_KEYS` array and `_apply_hooks_csv()` case in `wizard/wizard.sh`, and add `STR_HOOKS_*` strings in both i18n files. Add the hook label to `HOOK_LABELS` arrays in both `_step_hooks()` and `_step_confirm()`
+5. Features are auto-collected by `build_settings_file()` in `lib/deploy.sh` via `_FEATURE_ORDER` / `_FEATURE_FLAGS` registry — no manual merge code needed
+6. If external scripts needed: add to `deploy_hook_scripts()` in `setup.sh`
+7. If the feature creates files outside the standard manifest-tracked directories, add explicit cleanup to `uninstall.sh`
+8. Verify update-path adoption. A new key must be checked in all of these paths:
    - fresh install
    - `setup.sh --update` / `/update-kit`
    - saved config reuse in `wizard/wizard.sh`
-   Missing keys on older installs should receive the intended default for that profile, but existing explicit user choices must win.
-10. Update `CHANGELOG.md` in the same PR when the feature changes user-visible behavior, default presets, commands, docs, generated files, or upgrade behavior. Write the entry directly under the version heading (`## [x.y.z]`) that will be tagged on merge — do not use an `[Unreleased]` section. Follow the existing Keep a Changelog structure and write the entry at the level users will notice.
+   Missing keys on older installs should receive the intended default, but existing explicit user choices must win.
+9. Update `CHANGELOG.md` in the same PR when the feature changes user-visible behavior, default presets, commands, docs, generated files, or upgrade behavior. Write the entry directly under the version heading (`## [x.y.z]`) that will be tagged on merge — do not use an `[Unreleased]` section. Follow the existing Keep a Changelog structure and write the entry at the level users will notice.
 
 Multiple features can safely use the same hook type (e.g., `PreCompact`) — `merge_deep()` concatenates arrays instead of replacing them.
 
@@ -325,7 +317,7 @@ Multiple features can safely use the same hook type (e.g., `PreCompact`) — `me
 
 ## Adding a New Plugin
 
-1. Add entry to `config/plugins.json` under `plugins[]` with `name`, `marketplace`, `description`, `profiles`
+1. Add entry to `config/plugins.json` under `plugins[]` with `name`, `marketplace`, `description`
 2. If using a new marketplace, add its GitHub repo to `marketplaces` mapping in the same file
 3. Verify JSON: `jq . config/plugins.json`
 4. If the plugin name already exists in another marketplace, `_plugin_has_collision()` will auto-detect and the wizard will show `[marketplace]` suffix; `_compute_selected_plugins()` will produce `name@marketplace` in the CSV

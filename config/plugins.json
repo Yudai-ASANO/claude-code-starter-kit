@@ -7,86 +7,52 @@
     {
       "name": "security-guidance",
       "marketplace": "claude-plugins-official",
-      "description": "Security best practices and vulnerability detection",
-      "profiles": ["standard", "full"]
+      "description": "Security best practices and vulnerability detection"
     },
     {
       "name": "commit-commands",
       "marketplace": "claude-plugins-official",
-      "description": "Git commit and PR workflow commands",
-      "profiles": ["standard", "full"]
-    },
-    {
-      "name": "typescript-lsp",
-      "marketplace": "claude-plugins-official",
-      "description": "TypeScript language server integration",
-      "profiles": ["full"]
+      "description": "Git commit and PR workflow commands"
     },
     {
       "name": "pr-review-toolkit",
       "marketplace": "claude-plugins-official",
-      "description": "Comprehensive PR review with specialized agents",
-      "profiles": ["standard", "full"]
+      "description": "Comprehensive PR review with specialized agents"
     },
     {
       "name": "feature-dev",
       "marketplace": "claude-plugins-official",
-      "description": "Guided feature development with architecture focus",
-      "profiles": ["standard", "full"]
+      "description": "Guided feature development with architecture focus"
     },
     {
       "name": "code-review",
       "marketplace": "claude-plugins-official",
-      "description": "Code review for pull requests",
-      "profiles": ["standard", "full"]
+      "description": "Code review for pull requests"
     },
     {
       "name": "claude-md-management",
       "marketplace": "claude-plugins-official",
-      "description": "Audit and improve CLAUDE.md files",
-      "profiles": ["standard", "full"]
-    },
-    {
-      "name": "gopls-lsp",
-      "marketplace": "claude-plugins-official",
-      "description": "Go language server integration",
-      "profiles": ["full"]
-    },
-    {
-      "name": "pyright-lsp",
-      "marketplace": "claude-plugins-official",
-      "description": "Python language server integration",
-      "profiles": ["full"]
-    },
-    {
-      "name": "rust-analyzer-lsp",
-      "marketplace": "claude-plugins-official",
-      "description": "Rust language server integration",
-      "profiles": ["full"]
+      "description": "Audit and improve CLAUDE.md files"
     },
     {
       "name": "superpowers",
       "marketplace": "claude-plugins-official",
-      "description": "Skill system for brainstorming, TDD, debugging, and development workflows",
-      "profiles": ["standard", "full"]
+      "description": "Skill system for brainstorming, TDD, debugging, and development workflows"
     },
     {
       "name": "code-simplifier",
       "marketplace": "claude-plugins-official",
-      "description": "Code simplification and refactoring assistant",
-      "profiles": ["standard", "full"]
+      "description": "Code simplification and refactoring assistant"
     },
     {
       "name": "document-skills",
       "marketplace": "anthropic-agent-skills",
-      "description": "Document creation and editing skills (DOCX, PDF, PPTX, XLSX)",
-      "profiles": ["standard", "full"]
+      "description": "Document creation and editing skills (DOCX, PDF, PPTX, XLSX)"
     },
     {
       "name": "example-skills",
       "marketplace": "anthropic-agent-skills",
-      "description": "Creative, technical, and enterprise skill examples from Anthropic",
-      "profiles": ["standard", "full"]
+      "description": "Creative, technical, and enterprise skill examples from Anthropic"
     }
   ]
 }

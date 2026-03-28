@@ -6,14 +6,6 @@
 STR_BANNER="Claude Code スターターキット"
 STR_BANNER_SUB="インタラクティブ環境セットアップ"
 
-# Step 2: Profile
-STR_PROFILE_TITLE="構成プロファイルを選択してください："
-STR_PROFILE_MINIMAL="Minimal - エージェント + ルールのみ（軽量）"
-STR_PROFILE_STANDARD="Standard - エージェント + ルール + コマンド + スキル + 基本フック"
-STR_PROFILE_FULL="Full - 全機能有効（全フック + Codex MCP + Ghostty セットアップ含む）"
-STR_PROFILE_FULL_NO_GHOSTTY="Full - 全機能有効（全フック + Codex MCP）"
-STR_PROFILE_CUSTOM="Custom - 個別にコンポーネントを選択"
-
 # Step 3: Codex MCP
 STR_CODEX_TITLE="OpenAI Codex MCP をサブエージェントとして使用しますか？"
 STR_CODEX_YES="はい - CLAUDE.md に Codex MCP 委譲ルールを追加"
@@ -21,7 +13,7 @@ STR_CODEX_NO="いいえ - スキップ（後から追加可能）"
 
 # Step 3.5: New /init
 STR_NEW_INIT_TITLE="Claude Code の新しい /init 対話モードを有効にしますか？"
-STR_NEW_INIT_DESC="有効にすると、/init で CLAUDE.md だけでなく skills や hooks の初期セットアップ提案も行えるようになります。Minimal / Standard / Full では既定で有効です。"
+STR_NEW_INIT_DESC="有効にすると、/init で CLAUDE.md だけでなく skills や hooks の初期セットアップ提案も行えるようになります。既定で有効です。"
 STR_NEW_INIT_YES="はい - /init を対話型フローで使う"
 STR_NEW_INIT_NO="いいえ - 従来の /init 挙動のままにする"
 
@@ -102,7 +94,6 @@ STR_COMMIT_NO="コミットとPRの帰属表示を含めない"
 # Step 8: Confirm
 STR_CONFIRM_TITLE="設定サマリー"
 STR_CONFIRM_LANGUAGE="言語"
-STR_CONFIRM_PROFILE="プロファイル"
 STR_CONFIRM_NEW_INIT="新しい /init"
 STR_CONFIRM_CODEX="Codex MCP"
 STR_CONFIRM_EDITOR="エディタ"

@@ -17,7 +17,7 @@
 # Globals (defaults can be overridden by defaults.conf or loaded config)
 # ---------------------------------------------------------------------------
 LANGUAGE="${LANGUAGE:-}"
-PROFILE="${PROFILE:-}"
+PROFILE="standard"
 EDITOR_CHOICE="${EDITOR_CHOICE:-}"
 COMMIT_ATTRIBUTION="${COMMIT_ATTRIBUTION:-}"
 ENABLE_NEW_INIT="${ENABLE_NEW_INIT:-}"
@@ -119,15 +119,6 @@ _editor_label() {
   esac
 }
 
-_profile_label() {
-  case "${1:-}" in
-    minimal)  printf "%s" "$STR_PROFILE_MINIMAL" ;;
-    standard) printf "%s" "$STR_PROFILE_STANDARD" ;;
-    full)     printf "%s" "$STR_PROFILE_FULL" ;;
-    custom)   printf "%s" "$STR_PROFILE_CUSTOM" ;;
-    *)        printf "%s" "$STR_PROFILE_STANDARD" ;;
-  esac
-}
 
 _language_label() {
   case "${1:-}" in
@@ -141,7 +132,7 @@ _language_label() {
 # ---------------------------------------------------------------------------
 
 # Allowed config variable names (used by _safe_source_config for allowlist validation)
-_CONFIG_ALLOWED_KEYS="LANGUAGE PROFILE EDITOR_CHOICE COMMIT_ATTRIBUTION ENABLE_NEW_INIT INSTALL_AGENTS INSTALL_RULES INSTALL_COMMANDS INSTALL_SKILLS INSTALL_MEMORY ENABLE_CODEX_MCP ENABLE_TMUX_HOOKS ENABLE_GIT_PUSH_REVIEW ENABLE_DOC_BLOCKER ENABLE_PRETTIER_HOOKS ENABLE_CONSOLE_LOG_GUARD ENABLE_MEMORY_PERSISTENCE ENABLE_STRATEGIC_COMPACT ENABLE_PR_CREATION_LOG ENABLE_PRE_COMPACT_COMMIT ENABLE_SAFETY_NET ENABLE_AUTO_UPDATE ENABLE_STATUSLINE ENABLE_GHOSTTY_SETUP ENABLE_FONTS_SETUP ENABLE_DOC_SIZE_GUARD SELECTED_PLUGINS"
+_CONFIG_ALLOWED_KEYS="LANGUAGE EDITOR_CHOICE COMMIT_ATTRIBUTION ENABLE_NEW_INIT INSTALL_AGENTS INSTALL_RULES INSTALL_COMMANDS INSTALL_SKILLS INSTALL_MEMORY ENABLE_CODEX_MCP ENABLE_TMUX_HOOKS ENABLE_GIT_PUSH_REVIEW ENABLE_DOC_BLOCKER ENABLE_PRETTIER_HOOKS ENABLE_CONSOLE_LOG_GUARD ENABLE_MEMORY_PERSISTENCE ENABLE_STRATEGIC_COMPACT ENABLE_PR_CREATION_LOG ENABLE_PRE_COMPACT_COMMIT ENABLE_SAFETY_NET ENABLE_AUTO_UPDATE ENABLE_STATUSLINE ENABLE_GHOSTTY_SETUP ENABLE_FONTS_SETUP ENABLE_DOC_SIZE_GUARD SELECTED_PLUGINS"
 
 # Safe key=value parser: reads a config file line-by-line and only sets
 # variables whose names appear in the allowlist. This replaces the previous
@@ -163,25 +154,12 @@ _safe_source_config() {
   done < "$file"
 }
 
-load_defaults() {
-  local dir
-  dir="$(_wizard_dir)"
-  if [[ -f "$dir/defaults.conf" ]]; then
-    _safe_source_config "$dir/defaults.conf"
-  fi
-}
 
 load_profile_config() {
-  local profile="$1"
-  # Validate profile against allowlist to prevent path traversal
-  case "$profile" in
-    minimal|standard|full|custom) ;;
-    *) return 1 ;;
-  esac
   local dir
   dir="$(_project_dir)"
-  if [[ -f "$dir/profiles/${profile}.conf" ]]; then
-    _safe_source_config "$dir/profiles/${profile}.conf"
+  if [[ -f "$dir/profiles/standard.conf" ]]; then
+    _safe_source_config "$dir/profiles/standard.conf"
   fi
 }
 
@@ -193,14 +171,8 @@ load_config() {
 }
 
 fill_missing_profile_defaults() {
-  local profile="$1"
-  case "$profile" in
-    minimal|standard|full|custom) ;;
-    *) return 1 ;;
-  esac
-
   local saved_enable_new_init="${ENABLE_NEW_INIT:-}"
-  load_profile_config "$profile"
+  load_profile_config
   if [[ -n "$saved_enable_new_init" ]]; then
     ENABLE_NEW_INIT="$saved_enable_new_init"
   fi
@@ -214,7 +186,7 @@ _sanitize_config_value() {
 
 # Keys to save in config file, in order. Empty string = blank line separator.
 _CONFIG_SAVE_KEYS=(
-  LANGUAGE PROFILE EDITOR_CHOICE COMMIT_ATTRIBUTION ENABLE_NEW_INIT
+  LANGUAGE EDITOR_CHOICE COMMIT_ATTRIBUTION ENABLE_NEW_INIT
   ""
   INSTALL_AGENTS INSTALL_RULES INSTALL_COMMANDS INSTALL_SKILLS INSTALL_MEMORY
   ""
@@ -255,7 +227,6 @@ _restore_config_from_manifest() {
   local manifest_commit_attribution manifest_new_init
   local saved_has_commit_attribution="false" saved_has_new_init="false"
   local current_commit_attribution="" current_new_init=""
-  PROFILE="$(jq -r '.profile // "standard"' "$manifest")"
   LANGUAGE="$(jq -r '.language // "en"' "$manifest")"
   EDITOR_CHOICE="$(jq -r '.editor // "none"' "$manifest")"
   SELECTED_PLUGINS="$(jq -r '.plugins // ""' "$manifest")"
@@ -277,7 +248,7 @@ _restore_config_from_manifest() {
   fi
 
   # Load profile config to get INSTALL_* and ENABLE_* flags
-  load_profile_config "$PROFILE"
+  load_profile_config
 
   # Load saved wizard config for feature toggles
   load_config "$config_file"
@@ -350,7 +321,6 @@ load_strings() {
 # Plugin management
 # ---------------------------------------------------------------------------
 PLUGIN_NAMES=()
-PLUGIN_PROFILES=()
 PLUGIN_SELECTED=()
 PLUGIN_MARKETPLACES=()
 
@@ -359,7 +329,6 @@ _load_plugins() {
   dir="$(_project_dir)"
   local file="$dir/config/plugins.json"
   PLUGIN_NAMES=()
-  PLUGIN_PROFILES=()
   PLUGIN_SELECTED=()
   PLUGIN_MARKETPLACES=()
 
@@ -371,12 +340,10 @@ _load_plugins() {
   count="$(jq '.plugins | length' "$file")"
   local i
   for ((i = 0; i < count; i++)); do
-    local name profiles_csv marketplace
+    local name marketplace
     name="$(jq -r ".plugins[$i].name" "$file")"
-    profiles_csv="$(jq -r ".plugins[$i].profiles | join(\",\")" "$file")"
     marketplace="$(jq -r '.plugins['"$i"'].marketplace // "claude-plugins-official"' "$file")"
     PLUGIN_NAMES+=("$name")
-    PLUGIN_PROFILES+=("$profiles_csv")
     PLUGIN_SELECTED+=("false")
     PLUGIN_MARKETPLACES+=("$marketplace")
   done
@@ -399,14 +366,9 @@ _plugin_has_collision() {
 }
 
 _init_plugins_for_profile() {
-  local profile="$1"
   local i
   for i in "${!PLUGIN_NAMES[@]}"; do
-    if [[ ",${PLUGIN_PROFILES[$i]}," == *",$profile,"* ]]; then
-      PLUGIN_SELECTED[$i]="true"
-    else
-      PLUGIN_SELECTED[$i]="false"
-    fi
+    PLUGIN_SELECTED[$i]="true"
   done
 }
 
@@ -555,8 +517,6 @@ parse_cli_args() {
         ;;
       --language=*)      LANGUAGE="${arg#*=}"; _CLI_OVERRIDES+=("LANGUAGE") ;;
       --language)        shift; LANGUAGE="${1:-}"; _CLI_OVERRIDES+=("LANGUAGE") ;;
-      --profile=*)       PROFILE="${arg#*=}"; _CLI_OVERRIDES+=("PROFILE") ;;
-      --profile)         shift; PROFILE="${1:-}"; _CLI_OVERRIDES+=("PROFILE") ;;
       --editor=*)        EDITOR_CHOICE="${arg#*=}"; _CLI_OVERRIDES+=("EDITOR_CHOICE") ;;
       --editor)          shift; EDITOR_CHOICE="${1:-}"; _CLI_OVERRIDES+=("EDITOR_CHOICE") ;;
       --new-init=*)      _set_bool ENABLE_NEW_INIT "${arg#*=}"; _CLI_OVERRIDES+=("ENABLE_NEW_INIT") ;;
@@ -643,48 +603,7 @@ _step_language() {
 }
 
 _step_profile() {
-  if [[ -n "$PROFILE" ]]; then
-    local _saved_overrides=()
-    local _var _val
-    for _var in "${_CLI_OVERRIDES[@]+"${_CLI_OVERRIDES[@]}"}"; do
-      _val="${!_var:-}"
-      if [[ -n "$_val" ]]; then
-        _saved_overrides+=("${_var}=${_val}")
-      fi
-    done
-    load_profile_config "$PROFILE"
-    local _pair _restore_key _restore_val
-    for _pair in "${_saved_overrides[@]+"${_saved_overrides[@]}"}"; do
-      if [[ -n "$_pair" ]]; then
-        _restore_key="${_pair%%=*}"
-        _restore_val="${_pair#*=}"
-        printf -v "$_restore_key" '%s' "$_restore_val"
-      fi
-    done
-    return
-  fi
-  section "$STR_PROFILE_TITLE"
-  printf "  1) %s\n" "$STR_PROFILE_MINIMAL"
-  printf "  2) %s (%s)\n" "$STR_PROFILE_STANDARD" "$STR_RECOMMENDED"
-  # Windows (WSL/MSYS) では Ghostty 非対応のため説明文を切り替え
-  local _full_label="$STR_PROFILE_FULL"
-  if [[ "$(uname -s)" != "Darwin" ]]; then _full_label="${STR_PROFILE_FULL_NO_GHOSTTY:-$STR_PROFILE_FULL}"; fi
-  printf "  3) %s\n" "$_full_label"
-  printf "  4) %s\n" "$STR_PROFILE_CUSTOM"
-  local choice=""
-  read -r -p "${STR_CHOICE}: " choice
-  case "$choice" in
-    1) PROFILE="minimal" ;;
-    3) PROFILE="full" ;;
-    4) PROFILE="custom" ;;
-    *) PROFILE="standard" ;;
-  esac
-
-  if [[ "$PROFILE" == "custom" ]]; then
-    load_defaults
-  else
-    load_profile_config "$PROFILE"
-  fi
+  load_profile_config
 }
 
 # _prompt_yes_no <var_name> <default>
@@ -716,16 +635,7 @@ _step_codex() {
 }
 
 _step_new_init() {
-  local _ov; for _ov in "${_CLI_OVERRIDES[@]+"${_CLI_OVERRIDES[@]}"}"; do [[ "$_ov" == "ENABLE_NEW_INIT" ]] && return; done
-  if [[ "$PROFILE" != "custom" ]]; then return; fi
-
-  section "$STR_NEW_INIT_TITLE"
-  printf "  %s\n\n" "$STR_NEW_INIT_DESC"
-  printf "  1) %s\n" "$STR_NEW_INIT_YES"
-  printf "  2) %s\n" "$STR_NEW_INIT_NO"
-  local _default="2"
-  if [[ "${ENABLE_NEW_INIT:-false}" == "true" ]]; then _default="1"; fi
-  _prompt_yes_no ENABLE_NEW_INIT "$_default"
+  return
 }
 
 _step_editor() {
@@ -750,29 +660,10 @@ _step_editor() {
 _step_ghostty() {
   # Ghostty is macOS only — skip on all non-macOS platforms
   if [[ "$(uname -s)" != "Darwin" ]]; then ENABLE_GHOSTTY_SETUP="false"; return; fi
-  # Skip if explicitly set by CLI arg
-  local _ov; for _ov in "${_CLI_OVERRIDES[@]+"${_CLI_OVERRIDES[@]}"}"; do [[ "$_ov" == "ENABLE_GHOSTTY_SETUP" ]] && return; done
-  # Only ask for custom profile; other profiles use their preset value
-  if [[ "$PROFILE" != "custom" ]]; then return; fi
-
-  section "$STR_GHOSTTY_TITLE"
-  printf "  %s\n\n" "$STR_GHOSTTY_DESC"
-  printf "  1) %s\n" "$STR_GHOSTTY_YES"
-  printf "  2) %s\n" "$STR_GHOSTTY_NO"
-  _prompt_yes_no ENABLE_GHOSTTY_SETUP "2"
 }
 
 _step_fonts() {
-  # Skip if explicitly set by CLI arg
-  local _ov; for _ov in "${_CLI_OVERRIDES[@]+"${_CLI_OVERRIDES[@]}"}"; do [[ "$_ov" == "ENABLE_FONTS_SETUP" ]] && return; done
-  # Only ask for custom profile; other profiles use their preset value
-  if [[ "$PROFILE" != "custom" ]]; then return; fi
-
-  section "$STR_FONTS_TITLE"
-  printf "  %s\n\n" "$STR_FONTS_DESC"
-  printf "  1) %s\n" "$STR_FONTS_YES"
-  printf "  2) %s\n" "$STR_FONTS_NO"
-  _prompt_yes_no ENABLE_FONTS_SETUP "2"
+  return
 }
 
 _step_hooks() {
@@ -824,7 +715,7 @@ _step_hooks() {
 
 _step_plugins() {
   _load_plugins
-  _init_plugins_for_profile "$PROFILE"
+  _init_plugins_for_profile
 
   if [[ -n "$SELECTED_PLUGINS" ]]; then
     _apply_plugins_from_csv "$SELECTED_PLUGINS"
@@ -896,7 +787,6 @@ _step_confirm() {
 
   section "$STR_CONFIRM_TITLE"
   printf "%-20s : %s\n" "$STR_CONFIRM_LANGUAGE" "$(_language_label "$LANGUAGE")"
-  printf "%-20s : %s\n" "$STR_CONFIRM_PROFILE" "$(_profile_label "$PROFILE")"
   printf "%-20s : %s\n" "$STR_CONFIRM_CODEX" "$(_bool_label_enabled "$ENABLE_CODEX_MCP")"
   printf "%-20s : %s\n" "$STR_CONFIRM_NEW_INIT" "$(_bool_label_enabled "$ENABLE_NEW_INIT")"
   printf "%-20s : %s\n" "$STR_CONFIRM_EDITOR" "$(_editor_label "$EDITOR_CHOICE")"
@@ -954,7 +844,6 @@ _step_confirm() {
 # ---------------------------------------------------------------------------
 _fill_noninteractive_defaults() {
   [[ -z "$LANGUAGE" ]] && LANGUAGE="en"
-  [[ -z "$PROFILE" ]] && PROFILE="standard"
 
   # Save CLI-overridden values before loading profile/config
   # (both load_config and load_profile_config unconditionally set ENABLE_* flags)
@@ -963,7 +852,7 @@ _fill_noninteractive_defaults() {
     [[ -n "$_override" ]] && _saved_overrides+=("$_override")
   done < <(_capture_cli_overrides)
 
-  load_profile_config "$PROFILE"
+  load_profile_config
 
   # Restore CLI-overridden values (CLI takes precedence over profile/config)
   _restore_cli_overrides "${_saved_overrides[@]+"${_saved_overrides[@]}"}"
@@ -983,7 +872,7 @@ _fill_noninteractive_defaults() {
   # Compute plugins if not already set
   if [[ -z "$SELECTED_PLUGINS" ]]; then
     _load_plugins
-    _init_plugins_for_profile "$PROFILE"
+    _init_plugins_for_profile
     _compute_selected_plugins
   fi
 
@@ -1027,7 +916,7 @@ run_wizard() {
   if [[ "$WIZARD_NONINTERACTIVE" == "true" ]]; then
     _fill_noninteractive_defaults
     load_strings "$LANGUAGE"
-    info "Non-interactive mode: PROFILE=$PROFILE LANGUAGE=$LANGUAGE"
+    info "Non-interactive mode: LANGUAGE=$LANGUAGE"
     return
   fi
 
@@ -1043,7 +932,7 @@ run_wizard() {
     read -r -p "${STR_CHOICE}: " _config_choice
     if [[ "$_config_choice" == "1" ]]; then
       if [[ -n "$PROFILE" ]]; then
-        fill_missing_profile_defaults "$PROFILE"
+        fill_missing_profile_defaults
       fi
       # Show confirm with saved settings
       _step_confirm
@@ -1054,7 +943,6 @@ run_wizard() {
     fi
     # Reset for fresh start (all user choices cleared so wizard asks again)
     LANGUAGE=""
-    PROFILE=""
     EDITOR_CHOICE=""
     COMMIT_ATTRIBUTION=""
     ENABLE_NEW_INIT=""
@@ -1085,7 +973,6 @@ run_wizard() {
     if [[ "$WIZARD_RESULT" == "edit" ]]; then
       # Reset for re-run (all user choices cleared so wizard asks again)
       LANGUAGE=""
-      PROFILE=""
       EDITOR_CHOICE=""
       COMMIT_ATTRIBUTION=""
       ENABLE_NEW_INIT=""

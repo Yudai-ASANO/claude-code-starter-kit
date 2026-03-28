@@ -4,7 +4,6 @@
   "description": "Log PR URL and provide review command after PR creation",
   "category": "hook",
   "default": true,
-  "profiles": { "minimal": false, "standard": true, "full": true },
   "dependencies": [],
   "conflicts": []
 }

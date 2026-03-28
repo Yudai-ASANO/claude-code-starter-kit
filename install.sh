@@ -4,13 +4,12 @@
 # Interactive (wizard):
 #   curl -fsSL https://raw.githubusercontent.com/cloudnative-co/claude-code-starter-kit/main/install.sh | bash
 #
-# Non-interactive (standard profile, all default plugins):
+# Non-interactive (all default plugins):
 #   curl -fsSL <url>/install.sh | bash -s -- --non-interactive
 #   NONINTERACTIVE=1 bash -c "$(curl -fsSL <url>/install.sh)"
 #
 # Options (passed through to setup.sh):
-#   --non-interactive       Skip wizard, use standard profile defaults
-#   --profile=<name>        Profile: minimal, standard (default), full
+#   --non-interactive       Skip wizard, use defaults
 #   --language=<code>       Language: en (default), ja
 #   --plugins=<csv>         Override plugin selection (name or name@marketplace)
 set -euo pipefail
@@ -205,7 +204,7 @@ if [[ "$_is_noninteractive" == "true" ]]; then
   if [[ "$_update_mode" == "true" ]]; then
     info "Starting update..."
   else
-    info "Starting non-interactive setup (standard profile)..."
+    info "Starting non-interactive setup..."
   fi
   exec bash "$INSTALL_DIR/setup.sh" ${_setup_args[@]+"${_setup_args[@]}"}
 else
