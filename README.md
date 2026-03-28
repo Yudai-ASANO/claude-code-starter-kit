@@ -1,990 +1,344 @@
-[English README](README.en.md) | [更新履歴 (CHANGELOG)](CHANGELOG.md)
+[更新履歴 (CHANGELOG)](CHANGELOG.md)
 
 # Claude Code Starter Kit
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Platform: macOS/Windows](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-blue.svg)](#-インストール)
+[![Platform: macOS/Linux/Windows](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows-blue.svg)](#セットアップ)
 
-Claude Code を初めて使う人でも、**ワンコマンドで開発環境を整えられる** セットアップキットです。
-プログラミングやターミナルが初めての方にもわかるように、やさしく説明しています。
+Claude Code の開発環境を対話型ウィザードで一括構築するシェルベースのツールキット。エージェント、ルール、コマンド、スキル、フック、プラグインを `~/.claude/` にデプロイし、セキュリティ・品質・生産性のベースラインを整える。
 
-> **このキットは、株式会社クラウドネイティブ代表取締役社長・文部科学省最高情報セキュリティアドバイザーの齊藤愼仁が普段使っている Claude Code 環境をそのまま再現できる内容になっています。**
+### 動作要件
 
-## Quick Start
-
-**Mac:**
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/cloudnative-co/claude-code-starter-kit/main/install.sh | bash
-```
-
-**Windows（PowerShell を管理者で実行）:**
-
-```powershell
-irm https://raw.githubusercontent.com/cloudnative-co/claude-code-starter-kit/main/install.ps1 | iex
-```
-
-> インストール後はターミナルを再起動して `claude` を実行。詳しくは [インストール](#-インストール) を参照。
-
----
+- **Bash 4+**（macOS デフォルトの `/bin/bash` は 3.2 だが、Bash 4+ がインストール済みなら自動検出して再実行）
+- **git**, **jq**, **curl**（未インストールの場合はセットアップ時に自動インストールを試行）
+- macOS / Linux / WSL / MSYS(Git Bash)
 
 ## 目次
 
-- [はじめに](#-はじめに)
-- [必要なもの](#-必要なもの)
-- [このキットでできること](#-このキットでできること)
-- [インストール](#-インストール)
-- [ウィザードの流れ](#-ウィザードの流れ)
-- [ウィザード設定と反映先の対応表](docs/wizard-config-mapping.md)
-- [プロファイルの選び方](#-プロファイルの選び方)
-- [主な機能](#-主な機能)
-- [セットアップ後にできること](#-セットアップ後にできること)
-- [非対話モード](#-非対話モード自動セットアップ)
-- [カスタマイズ](#-カスタマイズ)
-- [アンインストール](#-アンインストール)
-- [FAQ](#-faq)
-- [トラブルシューティング](#-トラブルシューティング)
-- [ディレクトリ構成](#-ディレクトリ構成)
-- [更新履歴](#-更新履歴)
-- [ライセンス](#-ライセンス)
+- [セットアップ](#セットアップ)
+- [Agents](#agents)
+- [Commands](#commands)
+- [Skills](#skills)
+- [Features / Hooks](#features--hooks)
+- [Plugins](#plugins)
+- [Rules](#rules)
+- [Memory](#memory)
+- [カスタマイズ](#カスタマイズ)
+- [ディレクトリ構成](#ディレクトリ構成)
+- [開発者向け](#開発者向け)
+- [ライセンス](#ライセンス)
 
 ---
 
-## 🌟 はじめに
+## セットアップ
 
-### Claude Code とは？
-
-**Claude Code** は、Anthropic が提供する **CLI（コマンドラインインターフェース）ツール** です。
-ターミナル（後述）から Claude AI に指示を出して、以下のようなことを手伝ってもらえます：
-
-- コードの作成・修正
-- 設計の相談・計画づくり
-- コードのレビュー（間違いがないかチェック）
-- テストの作成・実行
-- バグ（不具合）の調査・修正
-
-つまり、**AI がプログラミングのパートナーになってくれるツール** です。
-
-### ターミナルとは？
-
-**ターミナル** は、パソコンを **文字の命令（コマンド）で操作するアプリ** です。
-普段はマウスでクリックして操作しますが、ターミナルでは「ファイルを開く」「ソフトをインストールする」といった操作を **短い命令文をキーボードで入力して実行** します。
-
-| OS | ターミナルの開き方 |
-|---|---|
-| **macOS** | Spotlight（`Cmd + Space`）で「ターミナル」と入力して起動 |
-| **Windows** | セットアップ時は「PowerShell」、セットアップ後は「**Windows Terminal + WSL**」を使います（[使い方はこちら](#windows-での使い方)） |
-
-### エディタ（コードエディタ）とは？
-
-**エディタ** は、プログラムのコード（テキスト）を書いたり編集したりするための **専用アプリ** です。
-メモ帳（テキストエディット）のプログラミング向け高機能版と考えてください。コードの色分け表示、入力補完、エラー検出など、コーディングを助ける機能が備わっています。
-
-> **Claude Code 自体はターミナルで動くため、エディタがなくても使えます。**
-> ただし、このキットの一部機能（git push 前のコードレビュー）でエディタと連携できるため、ウィザードでエディタの質問が表示されます。
-> **エディタを持っていない場合や、よくわからない場合は「なし」を選べば問題ありません。**
-
-#### おすすめエディタ：VS Code
-
-**[VS Code（Visual Studio Code）](https://code.visualstudio.com/)** は、Microsoft が提供する **無料** のコードエディタで、世界で最も多くの開発者に使われています。初心者からプロまで幅広く対応しており、日本語にも対応しています。
-
-| OS | インストール方法 |
-|---|---|
-| **macOS** | [公式サイト](https://code.visualstudio.com/) からダウンロード → `.app` をアプリケーションフォルダにドラッグ |
-| **Windows** | [公式サイト](https://code.visualstudio.com/) からダウンロード → インストーラーを実行 |
-
-> **ヒント**: macOS でインストール後、VS Code を開いて `Cmd + Shift + P` →「shell command」と入力 →「**Shell Command: Install 'code' command in PATH**」を実行すると、ターミナルから `code` コマンドで VS Code を起動できるようになります。これを済ませておくと、ウィザードで「VS Code」を選んだときにスムーズに連携できます。
-
-#### その他の選択肢
-
-| エディタ | 特徴 | 公式サイト |
-|---|---|---|
-| **Cursor** | VS Code ベースの AI 特化エディタ | [cursor.com](https://www.cursor.com/) |
-| **Zed** | 超高速・軽量な次世代エディタ | [zed.dev](https://zed.dev/) |
-| **Neovim** | ターミナルベースの上級者向けエディタ | [neovim.io](https://neovim.io/) |
-
-### このキットは何をしてくれるの？
-
-Claude Code をインストールしただけでは、まっさらな状態です。
-このスターターキットは、**プロの開発者が使うような便利な設定を一括でセットアップ** してくれます。
-
-具体的には：
-- AI エージェント（役割ごとの専門アシスタント）をインストール
-- コーディングルール（お手本となる書き方のガイド）を設定
-- ショートカットコマンド（よく使う操作をワンタッチ化）を追加
-- 安全装置（コードの問題を自動で検出する仕組み）を設定
-
----
-
-## ✅ 必要なもの
-
-セットアップを始める前に、以下を確認してください。
-
-| 項目 | 条件 |
-|---|---|
-| パソコン | macOS / Windows 10 以降（64bit） |
-| インターネット | 必須（ツールのダウンロードに使います） |
-| 空き容量 | 1GB 以上 |
-| メモリ | 4GB 以上（8GB あると安心） |
-| 管理者権限 | ソフトのインストールに必要です |
-
-> **補足**: Windows の場合、WSL2（Windows Subsystem for Linux）を使ってセットアップを行います。
-> WSL2 が入っていなくても、セットアップ時に自動でインストールされます（管理者権限が必要です）。
-
-> **Bash 4+ 必須**: セットアップには Bash 4 以上が必要です。macOS のデフォルト `/bin/bash` は 3.2 ですが、Bash 4+ がインストールされていれば自動検出して再実行します。Linux / WSL では通常 Bash 4+ がインストール済みです。
-
-> **Linux について**: このキットは macOS と Windows を対象としています。Linux で利用する場合は、ディストリビューション（Ubuntu, Fedora 等）やデスクトップ環境（GNOME, KDE 等）に応じた調整が必要になる場合があります。方法 1 のワンライナーまたは方法 3 の手動インストールをお試しください。
-
----
-
-## 🧰 このキットでできること
-
-| できること | 説明 |
-|---|---|
-| ワンコマンドセットアップ | コマンド 1 つで環境構築が完了 |
-| 対話型ウィザード | 質問に答えるだけで最適な設定が選べる |
-| 3 つのプロファイル | 自分に合ったレベルの設定を選択 |
-| 日本語対応 | ウィザードもドキュメントも日本語 OK |
-| 非対話モード | CI/CD や自動化にも対応 |
-| クリーンアンインストール | 追加したものだけを安全に削除 |
-
----
-
-## ⚠️ 前提条件：Claude アカウント（有料）
-
-**Claude Code を使うには、Anthropic の有料アカウントが必要です。** 無料プランでは利用できません。
-
-### 料金プラン一覧
-
-| プラン | 月額料金 | 対象 | 特徴 |
-|--------|----------|------|------|
-| **Pro** | $20/月 | 個人（入門） | Claude Code 利用可能、基本的な使用量 |
-| **Max（5x）** | $100/月 | 個人（ヘビーユース） | Pro の 5 倍の使用量、長時間のコーディングに最適 |
-| **Max（20x）** | $200/月 | 個人（プロ向け） | Pro の 20 倍の使用量、大規模プロジェクト向け |
-| **Teams Standard** | $25/ユーザー/月 | チーム | 共有ワークスペース、管理者機能、SSO（SAML） |
-| **Teams Premium** | $150/ユーザー/月 | チーム（上位） | Standard 全機能 + 高い使用量上限 |
-| **Enterprise** | 要問い合わせ | 大企業 | カスタム契約、監査ログ、高度なセキュリティ |
-
-> **💡 Claude Code を本気で使うなら Max 20x が結局一番おすすめ**
->
-> Pro プラン（$20/月）でも Claude Code は利用できますが、実際に開発作業で使い始めると **驚くほど早くクレジットを使い切ってしまいます。** Claude Code はチャットと違い、コード生成・ファイル読み書き・テスト実行など 1 つのタスクで大量のトークンを消費するためです。
->
-> - **Pro（$20/月）**: お試し・軽い作業向け。本格的な開発にはすぐ足りなくなる
-> - **Max 5x（$100/月）**: 日常的に Claude Code を使う開発者向け。ただし集中して使うと足りなくなることも
-> - **Max 20x（$200/月）⭐ イチオシ**: 結局これが **一番コスパがいい**。使用量あたりの単価が最も安く、クレジット切れのストレスから解放される。さらに使い切っても **自動追加購入（Add-on Credits）機能** があるので、作業が途中で止まる心配がない
->
-> 個人的な実感として、Max 5x でも本気で開発していると月の途中で足りなくなることがあります。**最初から Max 20x にしておくのが、結果的に一番快適でコスパも良い** です。
-
-> **注意**: 上記は 2026 年 3 月時点の参考価格です。最新の料金は [claude.com/pricing](https://claude.com/pricing) をご確認ください。
-> Codex CLI（OpenAI 連携）を使う場合は、別途 ChatGPT の対象プラン契約、または OpenAI API キー認証と OpenAI API の利用料金が必要です。
-
-### 個人で使う場合
-
-[Claude Pro または Max プラン](https://claude.com/pricing)に加入してください。
-
-1. [claude.ai](https://claude.ai) にアクセスしてアカウントを作成
-2. 「Upgrade to Pro」または「Upgrade to Max」からプランに加入
-3. 以降のインストールが完了したら `claude` コマンドを実行すると、ブラウザが開いてログイン画面が表示されます
-
-### 会社・チームで使う場合
-
-**Claude for Teams** または **Claude for Enterprise** プランを利用します。
-
-- まだ契約がない場合 → 情報システム部門や上長に相談してください
-- 既にチーム契約がある場合 → 管理者にメンバー追加を依頼してください（管理者は [claude.ai](https://claude.ai) の管理画面からメンバーを招待できます）
-- AWS Bedrock / Google Vertex AI / Microsoft Foundry 経由で利用する場合 → [サードパーティ連携ドキュメント](https://code.claude.com/docs/en/third-party-integrations)を参照
-
-### 初回ログイン（認証方式の選択）
-
-`claude` コマンドを初めて実行すると、認証方式を選択する画面が表示されます。
-
-| 方式 | おすすめの人 | 説明 |
-|------|-------------|------|
-| **Claude.ai アカウント（OAuth）** ⭐ 推奨 | 個人・チーム利用 | ブラウザが開き、claude.ai にログインするだけ。Pro/Max/Teams/Enterprise プランで利用可能 |
-| **Anthropic Console（API キー）** | API 従量課金を使いたい開発者 | [console.anthropic.com](https://console.anthropic.com) で API キーを発行し、トークン単位で課金 |
-
-**迷ったら「Claude.ai アカウント（OAuth）」を選んでください。** ブラウザでログインするだけで完了し、追加の設定は不要です。
-
-#### OAuth ログインの手順
-
-1. ターミナルで `claude` を実行
-2. 認証方式の選択画面で **Claude.ai アカウント** を選択
-3. ブラウザが自動で開き、claude.ai のログイン画面が表示される
-4. メールアドレスとパスワードでログイン（チーム利用の場合は SSO）
-5. 「Claude Code を許可しますか？」の確認画面で「許可」をクリック
-6. ターミナルに戻ると認証完了 — すぐに使い始められます
-
-#### API キー認証の手順（上級者向け）
-
-1. [console.anthropic.com](https://console.anthropic.com) にアクセスしてアカウントを作成
-2. 支払い方法を設定（クレジットカード）
-3. API キーを発行
-4. ターミナルで `claude` を実行し、認証方式で **API キー** を選択
-5. 発行した API キーを入力
-
-> **注意**: API キー方式はトークン単位の従量課金です。Pro/Max プランのような定額制ではありません。
-
----
-
-## 🚀 インストール
-
-- **Mac の方** → 方法 1 をお使いください（もっとも簡単でおすすめ）
-- **Windows の方** → 方法 2 をお使いください
-
-### 方法 1: ワンライナー（Mac）
-
-**ステップ 1**: ターミナルを開きます（上の「ターミナルとは？」を参照）
-
-**ステップ 2**: 以下のコマンドをコピーして、ターミナルに貼り付けて `Enter` を押します
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/cloudnative-co/claude-code-starter-kit/main/install.sh | bash
-```
-
-> このコマンドは「インターネットからセットアップ用スクリプトをダウンロードして実行する」という意味です。
-> `curl` はファイルをダウンロードするコマンド、`bash` はそれを実行するコマンドです。
-
-**ステップ 3**: ウィザード（対話型の質問画面）が始まるので、画面の指示に従って選択していきます
-
-#### 質問なしで一括セットアップしたい場合
-
-ウィザードの質問をスキップして、Standard プロファイルの推奨設定で一括インストールできます：
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/cloudnative-co/claude-code-starter-kit/main/install.sh | bash -s -- --non-interactive
-```
-
-> Standard プロファイルのエージェント、ルール、コマンド、スキル、フック、プラグインがすべて自動でインストールされます。
-
----
-
-### 方法 2: Windows PowerShell（WSL2 を使用）
-
-**ステップ 1**: キーボードの `Windows` キーを押して「PowerShell」と入力し、**右クリック →「管理者として実行」** を選択します
-
-> WSL2 のインストールに管理者権限が必要です。既に WSL2 がインストール済みなら管理者権限は不要です。
-
-**ステップ 2**: 以下のコマンドをコピーして貼り付け、`Enter` を押します
-
-```powershell
-irm https://raw.githubusercontent.com/cloudnative-co/claude-code-starter-kit/main/install.ps1 | iex
-```
-
-> このコマンドは PowerShell 版のインストールスクリプトをダウンロードして実行します。
-> WSL2 と Ubuntu が未インストールの場合は自動でインストールされます（再起動が必要な場合があります）。
-
-**ステップ 3**: セットアップが完了したら、**Windows Terminal + WSL** で使い始めます
-
-> **重要**: Claude Code は PowerShell では動きません。必ず **WSL (Ubuntu)** 環境内で実行してください。
-
-### Windows での使い方
-
-セットアップ完了後、Claude Code を使うには **Windows Terminal** から WSL (Ubuntu) を開きます。
-
-#### Windows Terminal のインストール（推奨）
-
-Windows 11 には標準搭載されています。Windows 10 の場合は Microsoft Store から無料でインストールできます：
-
-```powershell
-winget install --id=Microsoft.WindowsTerminal
-```
-
-#### Claude Code の起動方法
-
-| 方法 | 手順 |
-|---|---|
-| **方法 A（おすすめ）** | Windows Terminal を開く → タブバーの「v」→「**Ubuntu**」を選択 |
-| **方法 B** | PowerShell で `wsl` と入力して Enter |
-
-Ubuntu のターミナルが開いたら、以下のように入力します：
-
-```bash
-cd ~/my-project    # 作業したいフォルダに移動
-claude             # Claude Code を起動
-```
-
-> **Windows Terminal + WSL2 の利点**:
-> - 特殊文字・カラー・Unicode を正しく処理し、Claude Code のインターフェースとの相性が最も良い
-> - タブ切り替えで Windows/Linux 環境を行き来できる
-> - Bash sandboxing がフル動作する
-> - Shift+Enter の改行も `/terminal-setup` で設定可能
-
-#### 管理者権限が使えない場合
-
-管理者権限がない環境では Git Bash モードが使えます：
-
-```powershell
-powershell -File install.ps1 --git-bash
-```
-
----
-
-### 方法 3: 手動インストール（中身を確認したい人向け）
+### 対話モード（デフォルト）
 
 ```bash
 git clone https://github.com/cloudnative-co/claude-code-starter-kit.git
-```
-
-> リポジトリ（プロジェクトの保管場所）を自分のパソコンにコピーします。
-
-```bash
 cd claude-code-starter-kit
-```
-
-> ダウンロードしたフォルダの中に移動します。`cd` は「ディレクトリを移動する」コマンドです。
-
-```bash
 ./setup.sh
 ```
 
-> セットアップウィザードを起動します。`./` は「今いるフォルダの中のファイルを実行する」という意味です。
+ウィザードが言語・エディタ・フック・プラグイン等を順番に質問し、選択に応じて `~/.claude/` にファイルをデプロイする。
 
----
-
-## 🧭 ウィザードの流れ
-
-セットアップを実行すると、以下の順番で質問が表示されます。
-それぞれ **番号を入力して `Enter` を押すだけ** で進められます。
-
-```
-1. 言語選択        → 日本語 or English
-2. Codex CLI       → 外部AIツール連携（わからなければ「いいえ」でOK）
-3. エディタ        → VS Code / Cursor / Zed / Neovim / なし
-4. フック          → 安全装置の選択
-5. プラグイン      → 追加機能の選択
-6. Claude Code 帰属 → コミットとPRの帰属表示を残すか
-7. 確認・デプロイ → 設定内容を確認して実行
-```
-
-> **迷ったら？** すべての質問には「おすすめ」のマークが付いています。デフォルトのまま進めれば問題ありません。
-
-> **エディタの質問について**: ステップ 4 で「どのエディタを使っていますか？」と聞かれます。
-> これは git push レビューフック（コードを共有する前にエディタで差分を確認する機能）のための設定です。
-> **エディタをインストールしていない場合や、わからない場合は「5) なし」を選んでください。** Claude Code の動作には影響しません。
-> エディタの詳細は「[エディタ（コードエディタ）とは？](#エディタコードエディタとは)」をご覧ください。
-
-> **選択肢がどこに反映されるか知りたい場合**: 詳細は [ウィザード設定と反映先の対応表](docs/wizard-config-mapping.md) を参照してください。`settings.json` に直接書かれる項目を確認できます。
-
----
-
-## ✨ 主な機能
-
-### 🤖 エージェント（9種類）
-
-エージェントは、**特定の役割に特化した AI アシスタント** です。
-必要に応じて Claude が自動で使い分けてくれます。
-
-| エージェント | 役割 | いつ使われる？ |
-|---|---|---|
-| **planner** | 計画の立案 | 複雑な機能を実装するとき |
-| **architect** | 設計の相談 | システム構成を決めるとき |
-| **tdd-guide** | テスト駆動開発 | 新機能の開発やバグ修正 |
-| **code-reviewer** | コードレビュー | コードを書いた後の品質チェック |
-| **security-reviewer** | セキュリティ検査 | セキュリティに関わる変更 |
-| **build-error-resolver** | ビルドエラー修正 | ビルド（コンパイル）が失敗したとき |
-| **e2e-runner** | E2E テスト | 画面操作の自動テスト |
-| **refactor-cleaner** | コード整理 | 不要なコードの削除・整理 |
-| **doc-updater** | ドキュメント更新 | README やドキュメントの更新 |
-
-### 💬 スラッシュコマンド（17個）
-
-スラッシュコマンドは、Claude に **ワンタッチで指示を出すショートカット** です。
-Claude Code のチャットで `/` に続けて入力します。
-
-| コマンド | 何をしてくれる？ |
-|---|---|
-| `/plan` | 作業の全体像を整理して計画を立てる |
-| `/tdd` | テストを先に書いてから実装する流れ |
-| `/code-review` | コードの品質をチェック |
-| `/build-fix` | ビルドエラーを自動で修正 |
-| `/e2e` | 画面操作の自動テストを作成・実行 |
-| `/verify` | 最終チェック（テスト、型チェック等） |
-| `/checkpoint` | 現在の作業を区切りとして記録 |
-| `/refactor-clean` | 不要なコードを見つけて整理 |
-| `/update-docs` | ドキュメントを最新の状態に更新 |
-| `/research` | コードベースの深い調査（RPI ワークフロー） |
-| `/handover` | セッション引き継ぎドキュメントの生成 |
-| `/update-kit` | スターターキットを手動で最新版に更新 |
-
-### 🪝 フック（安全装置・11個）
-
-フックは **自動で動作する安全装置** です。コードを書いたり保存したりしたときに、自動でチェックが走ります。
-
-| フック | 何をしてくれる？ |
-|---|---|
-| **Safety Net** | **破壊的な git/ファイルシステムコマンド（`git reset --hard`、`rm -rf` 等）を実行前にブロック** |
-| **自動アップデート** | **セッション開始時にスターターキットの最新版を自動で適用** |
-| Git Push レビュー | コードを共有する前に確認を促す |
-| Doc ブロッカー | 不要なドキュメントファイルの作成を防止 |
-| Prettier 自動フォーマット | JS/TS ファイルを自動で見た目を整える |
-| Console.log ガード | デバッグ用コードの消し忘れを警告 |
-| メモリ永続化 | セッション間で作業の記憶を保持 |
-| Strategic Compact | 適切なタイミングでコンテキスト整理を提案 |
-| PR 作成ログ | Pull Request の URL を記録 |
-| **コンパクト前自動コミット** | **コンテキスト圧縮の直前に変更を自動コミット** |
-| ドキュメントサイズガード | CLAUDE.md/AGENTS.md の肥大化を警告（Full のみ） |
-
-#### Safety Net とは？
-
-[cc-safety-net](https://github.com/kenryu42/claude-code-safety-net) は、Claude Code が実行しようとする Bash コマンドを **事前にチェックして、破壊的な操作をブロック** する安全装置です。
-
-ブロックされるコマンドの例：
-- `git reset --hard` — コミットしていない変更が消える
-- `git checkout -- <file>` — ファイルの変更が消える
-- `git push --force` — リモートの履歴が上書きされる
-- `rm -rf` — ファイル/ディレクトリの不可逆削除
-
-```
-Claude Code が Bash コマンドを実行しようとする
-  ↓
-PreToolUse フック（Safety Net）が発火
-  ├── 安全なコマンド → そのまま通過
-  └── 破壊的コマンド → ブロック（実行されない）
-```
-
-STRICT モード（`SAFETY_NET_STRICT=1`）が有効で、パース不能なコマンドも fail-closed（ブロック）になります。
-
-> **Standard / Full プロファイルでデフォルト有効です。** `npm install -g cc-safety-net` が別途必要です。
-
-#### 自動アップデートとは？
-
-Claude Code のセッションを開始するたびに、スターターキットの最新版が GitHub にリリースされていないかを **自動でチェック** します。新しいバージョンが見つかった場合、バックグラウンドで自動更新を実行します。
-
-```
-Claude Code セッション開始
-  ↓
-SessionStart フック発火
-  ├── キャッシュ確認（24時間以内にチェック済み → 何もしない）
-  └── GitHub からバージョン取得
-      ├── 最新版と一致 → 何もしない
-      └── 新バージョンあり → バックグラウンドで pull + setup.sh --update
-```
-
-- **24時間に1回だけ**チェック（毎回のセッション起動は遅くなりません）
-- ユーザー設定は 3-way merge で保持されます（手動カスタマイズが消えることはありません）
-- 更新結果は次回セッションから反映されます
-- ワンライナーインストール（`~/.claude-starter-kit/`）の場合のみ動作します
-- **dirty check**: kit リポジトリにローカル変更がある場合は更新をスキップし、`git stash` を案内します
-- **復旧案内**: 更新に失敗した場合、バックアップパスと復元コマンドを表示します（`~/.claude.backup.<timestamp>` から復元可能）
-
-> **Standard / Full プロファイルでデフォルト有効です。** ウィザードのフック選択で無効にできます。
-
-#### コンパクト前自動コミットとは？
-
-Claude Code を長時間使い続けると、会話が長くなりすぎて **コンテキスト圧縮（compact）** が自動で実行されることがあります。このとき、まだコミットしていない作業中の変更があると、圧縮後に Claude がその変更の文脈を忘れてしまい、**意図しない上書きや作業の消失** が起きる可能性があります。
-
-このフックは、compact が実行される **直前** に自動で `git commit` を行い、作業中の変更を安全に保存します。
-
-```
-compact が発火
-  ↓
-PreCompact フック実行
-  ├── メモリ永続化: 作業の記憶をファイルに保存
-  └── 自動コミット: git add -A && git commit（変更がある場合のみ）
-  ↓
-compact 実行（コンテキスト圧縮）
-```
-
-コミットメッセージは `checkpoint: pre-compact auto-commit` となるため、通常のコミットと区別できます。git リポジトリ外のプロジェクトでは何も起きません（エラーにはなりません）。
-
-> **Standard / Full プロファイルでデフォルト有効です。** 長時間の作業セッションで特に効果を発揮します。
-
-### 🧩 プラグイン（14個・マルチマーケットプレイス対応）
-
-プラグインは **Claude Code の機能を拡張するアドオン** です。
-Standard / Full プロファイルではおすすめのプラグインが自動でインストールされます。
-
-| プラグイン | 説明 | プロファイル |
-|---|---|---|
-| **security-guidance** | セキュリティのベストプラクティスと脆弱性検出 | Standard / Full |
-| **commit-commands** | Git コミット・PR ワークフローコマンド | Standard / Full |
-| **pr-review-toolkit** | 専門エージェントによる包括的な PR レビュー | Standard / Full |
-| **feature-dev** | アーキテクチャ重視の機能開発ガイド | Standard / Full |
-| **code-review** | プルリクエストのコードレビュー | Standard / Full |
-| **claude-md-management** | CLAUDE.md の監査・改善 | Standard / Full |
-| **superpowers** | ブレスト、TDD、デバッグ等のスキルシステム | Standard / Full |
-| **code-simplifier** | コード簡素化・リファクタリング支援 | Standard / Full |
-| **document-skills** 🆕 | ドキュメント作成・編集スキル（DOCX, PDF, PPTX, XLSX） | Standard / Full |
-| **example-skills** 🆕 | Anthropic 公式のクリエイティブ・技術・エンタープライズスキル集 | Standard / Full |
-| **typescript-lsp** | TypeScript 言語サーバー連携 | Full |
-| **gopls-lsp** | Go 言語サーバー連携 | Full |
-| **pyright-lsp** | Python 言語サーバー連携 | Full |
-| **rust-analyzer-lsp** | Rust 言語サーバー連携 | Full |
-
-> **マルチマーケットプレイス**: 同名のプラグインが複数のマーケットプレイスに存在する場合（例: `pr-review-toolkit`）、
-> ウィザードでは `[claude-plugins-official]` / `[claude-code-plugins]` のようにマーケットプレイス名が表示されます。
-> 非対話モードでは `pr-review-toolkit@claude-code-plugins` のように `name@marketplace` 形式で指定できます。
-
----
-
-## 🎉 セットアップ後にできること
-
-> **重要: セットアップ完了後は、必ずターミナルを再起動してください。**
-> セットアップ中に追加された PATH やシェル設定は、ターミナルを再起動しないと反映されません。
-> 現在のターミナルを閉じて、新しいターミナルを開いてから `claude` を実行してください。
-
-| OS | 手順 |
-|---|---|
-| **macOS** | ターミナルを閉じて再度開く → プロジェクトフォルダに移動 → `claude` と入力 |
-| **Windows** | PowerShell を閉じる → Windows Terminal を開く → Ubuntu タブ → `claude` と入力（[使い方はこちら](#windows-での使い方)） |
-| **Linux** | ターミナルを閉じて再度開く → プロジェクトフォルダに移動 → `claude` と入力 |
+### 非対話モード
 
 ```bash
-claude
-```
+# デフォルト設定で一括セットアップ
+./setup.sh --non-interactive
 
-> Claude Code が起動し、AI アシスタントと対話できるようになります。
-
-### 使い方の例：社内のアカウント棚卸しを自動化
-
-プログラミングの知識がなくても、Claude を使って業務ツールを作ることができます。
-ここでは「社内アカウントの棚卸し自動化ツール」を作る流れを紹介します。
-
-**ステップ 1: Claude の Web でプロンプトを作ってもらう**
-
-[claude.ai](https://claude.ai/new) にアクセスして、以下のように相談します：
-
-> 社内のアカウント棚卸しを自動化したいです。Claude Code に作成してもらうので、適切なプロンプトを作成してください。精度を高めるために必要だと思う質問があれば聞いてください。
-> アカウントは SaaS や人事データベースを参考にします。退職や休職時にどのように処理すべきかは、社内規定を遵守します。
-> 適切な実行頻度や接続する SaaS などは都度聞いてください。
-
-Claude が要件をヒアリングし、Claude Code 向けの具体的なプロンプトを生成してくれます。
-
-**ステップ 2: 生成されたプロンプトを Claude Code に貼り付ける**
-
-ターミナルで `claude` を起動し、ステップ 1 で生成されたプロンプトをそのままコピー＆ペーストします。
-Claude Code がコードの生成・テスト・実行までを自動で進めてくれます。
-
-> **ポイント**: Claude の Web（設計・要件整理）と Claude Code（実装・実行）を組み合わせることで、
-> プログラミング経験がなくても実用的なツールを作ることができます。
-
-### 使い方の例：デプロイ環境の構築も Claude Code に相談
-
-作ったプログラムを「実際に動かす環境」をどう作ればいいかわからない場合も、Claude Code に聞けば教えてくれます。
-たとえば以下のようなプロンプトを投げてみてください：
-
-**AWS Lambda にデプロイしたい場合：**
-
-```
-このプログラムを AWS Lambda にデプロイしたいです。
-必要な設定ファイル、IAM ロール、デプロイ手順をすべて教えてください。
-```
-
-**Google Cloud Functions にデプロイしたい場合：**
-
-```
-このプログラムを Google Cloud Functions にデプロイしたいです。
-必要な設定と手順を教えてください。
-```
-
-**どの環境がいいかわからない場合：**
-
-```
-このプログラムを本番環境で動かしたいです。
-AWS Lambda、Google Cloud Functions、Vercel などの選択肢を比較して、
-このプロジェクトに最適なデプロイ先を提案してください。
-```
-
-Claude Code はコードの作成だけでなく、**インフラ構築・デプロイ設定・CI/CD パイプラインの作成** まで手伝ってくれます。
-「自分で調べて設定する」のではなく、「Claude Code に聞いて一緒に作る」のがおすすめです。
-
-### 便利な使い方：スクリーンショットを Claude Code に送る
-
-作ったプログラムの画面表示がおかしい、エラー画面が出たなど、**画面の状態を Claude Code に見せたい場面** があります。
-Claude Code はスクリーンショット（画像）を受け取って内容を理解できるので、「ここがおかしい」と見せるだけで修正してくれます。
-
-#### macOS の場合
-
-| ステップ | 操作 | 説明 |
-|----------|------|------|
-| 1. スクリーンショットを撮る | `Cmd + Shift + Ctrl + 4` | 画面の一部を選択してクリップボードにコピー（ファイルには保存されません） |
-| 2. Claude Code に貼り付ける | `Ctrl + V`（Cmd ではなく **Ctrl**） | Claude Code のプロンプト（入力欄）にカーソルがある状態で貼り付け |
-
-> **重要**: 普段のコピー＆ペーストは `Cmd + V` ですが、Claude Code にスクリーンショットを送るときは **`Ctrl + V`** です。間違えやすいので注意してください。
-
-**スクリーンショットのショートカット一覧：**
-
-| ショートカット | 動作 |
-|----------------|------|
-| `Cmd + Shift + Ctrl + 4` | 選択範囲をクリップボードにコピー（おすすめ） |
-| `Cmd + Shift + Ctrl + 3` | 画面全体をクリップボードにコピー |
-| `Cmd + Shift + 4` | 選択範囲をファイルに保存（デスクトップ） |
-| `Cmd + Shift + 3` | 画面全体をファイルに保存（デスクトップ） |
-
-#### Windows（WSL）の場合
-
-| ステップ | 操作 | 説明 |
-|----------|------|------|
-| 1. スクリーンショットを撮る | `Win + Shift + S` | Snipping Tool が起動し、範囲を選択するとクリップボードにコピーされる |
-| 2. Claude Code に貼り付ける | `Ctrl + V` | Windows Terminal 上の Claude Code に貼り付け |
-
-> **ヒント**: `Win + Shift + S` を押すと画面が暗くなり、マウスで範囲を選択できます。選択後、自動的にクリップボードにコピーされます。
-
-#### ファイルをドラッグ＆ドロップで送る
-
-スクリーンショットに限らず、**画像ファイルをターミナルにドラッグ＆ドロップ** しても Claude Code に送ることができます。
-デスクトップに保存したスクリーンショットや、デザインの参考画像を送りたいときに便利です。
-
-#### 使い方の例
-
-スクリーンショットを貼り付けた後、以下のように指示を出します：
-
-```
-このスクリーンショットを見てください。ログイン画面のレイアウトが崩れています。修正してください。
-```
-
-```
-このエラー画面のスクリーンショットです。原因を調べて修正してください。
-```
-
-### 便利な使い方：作業を中断・再開するときは `/init` で記憶させる
-
-Claude Code での作業を途中で中断したいとき（休憩、退勤、別の作業に切り替えるなど）、**そのまま閉じると次回起動時に前回の文脈が失われてしまいます。**
-
-`/init` コマンドを使うと、プロジェクトの状況や作業の文脈を `CLAUDE.md` ファイルに記録できます。次回 Claude Code を起動したときにこのファイルを自動で読み込むため、**続きからスムーズに作業を再開** できます。
-
-#### 中断するときの手順
-
-```
-1. 区切りのいいところまで作業する
-2. Claude Code に以下のように伝える：
-
-   ここまでの作業内容と次にやるべきことを整理して、/init で CLAUDE.md に記録してください。
-
-3. Claude Code が /init を実行し、CLAUDE.md にプロジェクトの状態を書き出す
-4. Claude Code を終了する（Ctrl + C または /exit）
-```
-
-#### 再開するときの手順
-
-```
-1. ターミナルでプロジェクトフォルダに移動
-2. claude と入力して起動
-3. Claude Code が CLAUDE.md を自動で読み込む
-4. 「前回の続きをお願いします」と伝えるだけでOK
-```
-
-#### `/init` で記録される内容の例
-
-- プロジェクトの概要・使用技術
-- ディレクトリ構成
-- よく使うコマンド（ビルド、テスト、起動など）
-- 現在の作業状況・次にやるべきこと
-
-> **ポイント**: `/init` は何度でも実行できます。作業が進むたびに実行すれば、`CLAUDE.md` が最新の状態に更新されます。
-> 特に大きな機能の実装中や、数日にわたる作業では、**区切りごとに `/init` で記録する習慣** をつけると、毎回スムーズに再開できます。
-
-### 便利な使い方：`--resume` で前回のセッションにそのまま戻る
-
-`/init` で CLAUDE.md に記録する方法とは別に、**前回の会話セッションそのものを丸ごと復元** する方法もあります。
-
-```bash
-claude --resume
-# または短縮形
-claude -r
-```
-
-これを実行すると、前回の Claude Code セッション（会話履歴・作業の流れ）がそのまま復元されます。
-`/init` が「プロジェクトの状態をメモに書き残す」イメージなら、`--resume` は「閉じたノートをそのまま開き直す」イメージです。
-
-#### どちらを使えばいい？
-
-| 方法 | 向いている場面 |
-|---|---|
-| **`/init`** | 数日空く場合、別プロジェクトに切り替える場合、チームメンバーにも文脈を共有したい場合 |
-| **`--resume`** | ちょっと休憩して戻る場合、さっきの続きをすぐやりたい場合 |
-
-> **ヒント**: 両方を組み合わせるのが最強です。作業の区切りで `/init` を実行して CLAUDE.md に記録しつつ、すぐ戻るときは `claude --resume` でセッションごと復元する。これなら、どんな状況でも作業の続きにスムーズに戻れます。
-
----
-
-## ⚙️ 非対話モード（自動セットアップ）
-
-ウィザードの質問に答えず、コマンドだけでセットアップしたい場合に使います。
-CI/CD（自動デプロイ）やチーム全員の環境を統一したい場合に便利です。
-
-### ワンライナーで非対話インストール
-
-```bash
-# 方法 1: --non-interactive フラグ
-curl -fsSL https://raw.githubusercontent.com/cloudnative-co/claude-code-starter-kit/main/install.sh | bash -s -- --non-interactive
-
-# 方法 2: NONINTERACTIVE 環境変数
-NONINTERACTIVE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/cloudnative-co/claude-code-starter-kit/main/install.sh)"
-```
-
-> デフォルト設定で自動セットアップします。
-> プラグイン（複数マーケットプレイス対応）もすべて自動でインストールされます。
-
-### 基本的な使い方
-
-```bash
+# オプション指定
 ./setup.sh --non-interactive --language=ja --editor=vscode
-```
 
-> 日本語、VS Code エディタで自動セットアップします。
-
-### すべてのオプションを細かく指定
-
-```bash
-./setup.sh --non-interactive \
-  --language=ja \
-  --editor=cursor \
-  --new-init=true \
-  --codex-cli=false \
-  --commit-attribution=false \
-  --hooks=safety-net,auto-update,git-push,prettier,console,memory,compact,pr-log,pre-commit \
-  --plugins=security-guidance,commit-commands,pr-review-toolkit@claude-plugins-official,pr-review-toolkit@claude-code-plugins
-```
-
-> **プラグインの指定**: 同名のプラグインが複数のマーケットプレイスに存在する場合は `name@marketplace` 形式で指定します。
-> 衝突しないプラグインは従来通り名前だけで指定できます（例: `security-guidance`）。
->
-> **補足**:
-> - `--new-init=true` は Claude Code の新しい対話型 `/init` を有効にします
-> - `--commit-attribution=false` はコミットと PR の Claude Code 帰属表示を両方オフにします
-> - 詳細な反映先は [ウィザード設定と反映先の対応表](docs/wizard-config-mapping.md) を参照してください
->
-> **CLAUDE.md のカスタマイズ**:
-> - `~/.claude/CLAUDE.md` は kit 管理セクション（`<!-- BEGIN STARTER-KIT-MANAGED -->` 〜 `<!-- END STARTER-KIT-MANAGED -->`）とユーザーセクション（`# ユーザー設定`）に分かれています
-> - ユーザーセクションに自由にカスタム指示を追加できます。update 時も kit セクションのみ更新され、ユーザーセクションは保持されます
-> - 既存の CLAUDE.md にマーカーがない場合、初回 update 時に対話的にマイグレーションが行われます
->
-> **既存ユーザー向け**:
-> - すでにこの starter kit を使っている場合は、`/update-kit` または `./setup.sh --update` を優先してください。設定の競合時は対話的に確認し、判定を記憶する `[RK]/[RU]` オプションもあります。`--reset-prefs` で記憶をクリアできます。
-> - **starter kit 未使用だが `~/.claude/settings.json` がある場合**: 初回実行時に settings.json をマージ（上書きではなく）し、他のファイルはディレクトリ単位で確認します。
-> - `--non-interactive` は CI/自動デプロイ向けです。既存ユーザーには対話モードを推奨します。
-> - update 実行前には `~/.claude.backup.<タイムスタンプ>` に自動バックアップが作成されます。
->
-> **ドライラン（事前プレビュー）**:
-> - `/update-kit-dry-run` または `bash setup.sh --update --dry-run` で、update が何をするか事前に確認できます。ファイルの作成・変更・削除・スキップの一覧、settings.json の diff、外部操作（plugins 等）を `[WOULD RUN]` として表示します。
-> - 対話モードでの install / update 時、既存の設定とバッティングする可能性がある場合は「ドライランしますか？」と自動的に確認されます。既存設定がない新規インストールでは確認されません。
-> - `--non-interactive --dry-run` では前提ツールの導入もせず終了します。
-
-### 保存済み設定を使う
-
-```bash
+# 保存済み設定ファイルの再利用
 ./setup.sh --non-interactive --config=./my-config.conf
 ```
 
-> 以前のセットアップで保存された設定ファイルをそのまま再利用します。
-
----
-
-## 🔧 カスタマイズ
-
-セットアップ後、自分好みに設定を追加・変更できます。
-
-| やりたいこと | 方法 |
-|---|---|
-| エージェントを追加 | `~/.claude/agents/` に `.md` ファイルを作成 |
-| ルールを追加 | `~/.claude/rules/` に `.md` ファイルを作成 |
-| コマンドを追加 | `~/.claude/commands/` に `.md` ファイルを作成 |
-| スキルを追加 | `~/.claude/skills/{name}/` に `SKILL.md` + 必要に応じて `references/`, `scripts/`, `assets/` を作成 |
-| フックを変更 | `~/.claude/settings.json` の hooks セクションを編集 |
-
-> **設定のやり直し**: 既存の starter kit 環境を更新するときは、`/update-kit` または `./setup.sh --update` が安全です。競合があれば対話的に確認し、判定を記憶できます。
-> starter kit を初めて使う場合でも、既存の `settings.json` があればマージされ、他のファイルもディレクトリ単位で上書き/新規のみ/スキップを選べます。
-
----
-
-## 🧹 アンインストール
-
-ワンライナーでインストールした場合、リポジトリは `~/.claude-starter-kit/` に保存されています。
-
-**Mac / Linux：**
+### 更新
 
 ```bash
-~/.claude-starter-kit/uninstall.sh
+# 既存環境を最新キットに更新（3-way merge で設定を保持）
+./setup.sh --update
+
+# 更新内容の事前プレビュー（ファイル変更なし）
+./setup.sh --update --dry-run
 ```
 
-**Windows（WSL）：**
+更新時は `~/.claude.backup.<timestamp>` に自動バックアップが作成される。設定の競合は対話的に確認され、`[RK]`（現在の設定を保持して記憶）/ `[RU]`（キットの設定を使用して記憶）で判定を記憶できる。
 
-PowerShell またはターミナルで以下を実行してください：
-
-```bash
-wsl -d Ubuntu -- bash -lc '~/.claude-starter-kit/uninstall.sh'
-```
-
-**手動で `git clone` した場合** は、clone したディレクトリ内で実行してください。
+### アンインストール
 
 ```bash
-cd claude-code-starter-kit
 ./uninstall.sh
 ```
 
-> このキットが追加したファイルだけを安全に削除します。
-> 自分で手動追加したファイルはそのまま残ります。
-> 削除対象は `~/.claude/.starter-kit-manifest.json` で管理されています。
+マニフェスト（`~/.claude/.starter-kit-manifest.json`）に記録されたファイルのみを削除。手動追加のファイルは保持される。
 
 ---
 
-## ❓ FAQ
+## Agents
 
-### Q. Claude Code を使うにはお金がかかりますか？
+特定の役割に特化した AI エージェント定義。Claude Code が必要に応じて自動的に使い分ける。
 
-はい。**Claude Code の利用には Anthropic の有料プラン（Pro $20/月〜）が必要です。** 無料プランでは利用できません。
-詳しくは本ページの「[前提条件：Claude アカウント（有料）](#️-前提条件claude-アカウント有料)」をご確認ください。
-
-### Q. 会社の Claude アカウントで使えますか？
-
-はい。会社が **Claude for Teams** または **Claude for Enterprise** を契約している場合、管理者にメンバー追加を依頼してください。
-管理者は [claude.ai](https://claude.ai) の管理画面からチームメンバーを招待できます。
-AWS Bedrock や Google Vertex AI 経由の場合は情報システム部門にご相談ください。
-
-### Q. `claude` コマンド実行後の認証で OAuth と API キーどちらを選べばいいですか？
-
-**ほとんどの方は「Claude.ai アカウント（OAuth）」を選んでください。** ブラウザでログインするだけで完了します。
-API キー方式はトークン単位の従量課金で、API 開発者向けの選択肢です。
-詳しくは「[初回ログイン（認証方式の選択）](#初回ログイン認証方式の選択)」をご確認ください。
-
-### Q. Git やターミナルが初めてでも大丈夫ですか？
-
-はい、大丈夫です。ウィザードが質問形式でガイドしてくれるので、番号を選ぶだけで進められます。
-Git が入っていない場合も、セットアップスクリプトが自動でインストールを試みます。
-
-### Q. 途中で設定をやり直せますか？
-
-はい。`./setup.sh` をもう一度実行すると再設定できます。
-前回の選択を覚えているので、変えたい部分だけ変更すれば OK です。
-
-### Q. 何かおかしくなったら元に戻せますか？
-
-はい。`./uninstall.sh` でこのキットが追加したものだけを削除できます。
-また、セットアップ時に既存の設定は自動でバックアップされます。
-
-### Q. チーム全員で同じ設定にできますか？
-
-はい。非対話モード（`--non-interactive`）と設定ファイル（`--config=`）を使えば、
-全員が同じコマンド 1 つで同じ環境を構築できます。
-
-### Q. Codex CLI って何ですか？必要ですか？
-
-Codex CLI は **OpenAI の Codex（AI コーディングツール）を Claude Code から `codex exec` コマンドで委譲呼び出しする仕組み** です。
-有効にすると、Claude Code が複雑なタスクを Codex に委譲して並列で作業できるようになります。
-
-**利用するには以下のいずれかが必要です：**
-- **ChatGPT の対象プラン**で Codex CLI にログインする
-- **OpenAI API キー**で Codex CLI にログインする
-
-**わからない場合や契約していない場合は「いいえ」を選んで問題ありません。** Claude Code 単体でも十分に強力です。後から追加することもできます。
-
-#### Codex CLI を後から有効にする方法
-
-1. Codex CLI をインストール：
-   ```bash
-   npm install -g @openai/codex
-   ```
-2. Codex にログイン：
-   ChatGPT ログインを使う場合:
-   ```bash
-   codex login
-   ```
-   ブラウザが使いづらい環境では:
-   ```bash
-   codex login --device-auth
-   ```
-3. OpenAI API キーで使う場合のみ、API キーを追加してログイン：
-   ```bash
-   echo 'export OPENAI_API_KEY="sk-your-key-here"' >> ~/.bashrc
-   source ~/.bashrc
-   printenv OPENAI_API_KEY | codex login --with-api-key
-   ```
+| エージェント | 役割 |
+|---|---|
+| **planner** | 複雑な機能・リファクタリングの実装計画を立案 |
+| **architect** | システム設計・スケーラビリティ・技術的意思決定 |
+| **tdd-guide** | テスト駆動開発（RED → GREEN → REFACTOR）の強制 |
+| **code-reviewer** | コード品質・セキュリティ・保守性のレビュー |
+| **security-reviewer** | セキュリティ脆弱性の検出と修復 |
+| **build-error-resolver** | TypeScript / ビルドエラーの段階的修正 |
+| **e2e-runner** | Playwright によるエンドツーエンドテスト |
+| **refactor-cleaner** | デッドコードの検出・削除・統合 |
+| **doc-updater** | ドキュメントとコードマップの更新 |
+| **qa-reviewer** | スプリント契約基準に基づく実装の厳密評価 |
 
 ---
 
-## 🛠️ トラブルシューティング
+## Commands
 
-### 「command not found」と表示される
+Claude Code のチャットで `/コマンド名` と入力して使うスラッシュコマンド。
 
-ツールがインストールされていない可能性があります。
-
-```bash
-# Node.js が入っているか確認するコマンド
-node --version
-
-# Git が入っているか確認するコマンド
-git --version
-```
-
-表示されない場合は、セットアップスクリプトが自動インストールを試みますが、
-うまくいかない場合は以下から手動でインストールしてください：
-- Node.js: https://nodejs.org/
-- Git: https://git-scm.com/
-
-### ウィザードが途中で止まる
-
-- インターネット接続を確認してください
-- ターミナルを閉じてもう一度 `./setup.sh` を実行してみてください
-- `bash -x ./setup.sh` で実行すると、どこで止まっているか詳しく表示されます
-
-### WSL で「permission denied」と表示される
-
-管理者権限が必要な場合があります：
-
-```bash
-# コマンドの前に sudo を付けて実行してみてください
-sudo ./setup.sh
-```
-
-### セットアップ後に `claude` コマンドが見つからない
-
-ターミナルを一度閉じて、新しいターミナルを開いてください。
-パスの設定が反映されるには、ターミナルの再起動が必要です。
+| コマンド | 説明 | ユースケース |
+|---|---|---|
+| `/plan` | 要件整理・リスク評価・段階的実装計画の立案 | 新機能実装、大規模なアーキテクチャ変更、複数ファイルに影響する作業の開始前 |
+| `/tdd` | テスト先行 → 最小実装 → リファクタリングの TDD サイクル実行 | 新しい関数・コンポーネントの追加、重要なビジネスロジックの構築、バグ修正 |
+| `/code-review` | セキュリティと品質の包括的レビュー | コミット前の品質確認、認証情報露出・入力検証漏れ等の脆弱性スキャン |
+| `/build-fix` | ビルドエラーをグループ化して優先度順に段階修正 | `tsc` や bundler のビルドエラー発生時、型エラーの一括修正 |
+| `/e2e` | Playwright による E2E テストの生成・実行 | ログイン・支払い等の重要ユーザーフロー検証、本番デプロイ前の統合テスト |
+| `/verify` | ビルド・型チェック・リント・テスト・git status の包括検証 | PR 作成前・デプロイ前の最終チェック |
+| `/checkpoint` | ワークフロー中の進捗ポイントを作成・検証 | 実装フェーズの区切りでの状態保存、不具合発生時のロールバック判定 |
+| `/orchestrate` | 複数エージェントを連携させた順序付きワークフロー実行 | 大規模機能実装、セキュリティ監査を含む複合的な作業 |
+| `/research` | 関連ファイルの徹底調査・依存関係マッピング・既存パターン認識 | 既存アーキテクチャの理解が必要な場合、複雑な機能実装前の事前調査 |
+| `/refactor-clean` | デッドコード分析 → テスト検証 → 安全な削除 | 不要な関数・ファイル・依存関係の整理、コードベースのスリム化 |
+| `/test-coverage` | カバレッジ分析と不足テストの生成（80%+ 目標） | カバレッジ不足箇所の特定、品質基準達成の確認 |
+| `/eval` | 評価駆動開発：受け入れ基準の定義・実行・レポート生成 | 受け入れ基準が複雑な機能、リグレッション確認が重要な場合 |
+| `/init-harness` | テックスタック検出 → プロジェクト固有の検証フック自動生成 | プロジェクト初期化時、ビルド・テスト・リントの自動検証を設定したい場合 |
+| `/learn` | セッションから再利用可能なパターンを抽出・保存 | 非自明な問題解決方法やライブラリの癖を発見した際、将来のセッション高速化 |
+| `/handover` | セッション状態を文書化して引き継ぎドキュメントを生成 | セッション切り替え時の進捗保存、別の開発者やセッションへの文脈引き継ぎ |
+| `/update-docs` | package.json / .env.example からドキュメント自動同期 | 開発環境セットアップガイドやランブックの更新 |
+| `/update-codemaps` | ソースコード構造を分析しアーキテクチャドキュメントを生成 | リポジトリ構造の可視化、新規メンバーへのオンボーディング |
+| `/update-kit` | スターターキットを手動で最新版に更新 | 新機能やバグ修正の反映、自動更新が無効な環境での手動更新 |
+| `/update-kit-dry-run` | `/update-kit` の変更内容をプレビュー（変更なし） | 大規模なキット更新前の影響範囲確認 |
 
 ---
 
-## 📁 ディレクトリ構成
+## Skills
+
+特定ドメインの知識・ベストプラクティスを提供するスキルモジュール。`~/.claude/skills/` にデプロイされる。
+
+| スキル | 説明 |
+|---|---|
+| **coding-standards** | TypeScript / JavaScript / React / Node.js 向けコーディング規約とパターン |
+| **backend-patterns** | Node.js / Express / Next.js API のバックエンドアーキテクチャパターン |
+| **frontend-patterns** | React / Next.js の状態管理・パフォーマンス最適化・UI パターン |
+| **security-review** | 認証・入力処理・シークレット管理・API エンドポイントのセキュリティチェックリスト |
+| **tdd-workflow** | テスト駆動開発ワークフロー（80%+ カバレッジ強制） |
+| **eval-harness** | Claude Code セッション向け評価フレームワーク（EDD 原則） |
+| **verification-loop** | 包括的な検証システム |
+| **strategic-compact** | 論理的な間隔での手動コンテキスト圧縮を提案 |
+| **continuous-learning** | セッションから再利用可能パターンを自動抽出・保存 |
+| **prompt-patterns** | Claude Code を効果的に使うプロンプトパターン集 |
+| **clickhouse-io** | ClickHouse クエリ最適化・分析ワークロード向けパターン |
+| **project-guidelines-example** | プロジェクト固有スキルのテンプレート |
+
+---
+
+## Features / Hooks
+
+自動実行される安全装置・自動化機能。`features/*/hooks.json` の定義が `settings.json` にマージされる。
+
+| フィーチャー | 種別 | 説明 |
+|---|---|---|
+| **safety-net** | PreToolUse | 破壊的コマンド（`git reset --hard`, `rm -rf` 等）を実行前にブロック |
+| **auto-update** | SessionStart | セッション開始時にキットの最新版を自動チェック・適用（24h キャッシュ） |
+| **pre-compact-commit** | PreCompact | コンテキスト圧縮前に未コミット変更を自動コミットし作業消失を防止 |
+| **memory-persistence** | PreCompact | セッション状態をファイルに保存し、圧縮やセッション跨ぎで記憶を保持 |
+| **strategic-compact** | PreCompact | 適切なタイミングでコンテキスト圧縮を提案 |
+| **git-push-review** | PreToolUse | `git push` 前にエディタで差分確認を促す |
+| **doc-blocker** | PreToolUse | 不要な .md / .txt ファイルの作成をブロック |
+| **doc-size-guard** | PostToolUse | CLAUDE.md / AGENTS.md のサイズ超過とパス参照の破損を検出 |
+| **pr-creation-log** | PostToolUse | PR 作成後に URL を記録しレビューコマンドを提示 |
+| **pre-commit-gate** | PreToolUse | `git commit` 前に検証を実行（デフォルトは advisory） |
+| **post-test-analysis** | PostToolUse | テスト失敗時にサマリーを出力（opt-in） |
+| **harness-init** | PostToolUse | テックスタックを検出し `/init-harness` セットアップを提案 |
+| **statusline** | statusLine | モデル名・コンテキスト使用量・レート制限を Braille Dots パターンで表示 |
+| **codex-cli** | 設定 | OpenAI Codex CLI へのタスク委譲を有効化 |
+| **check-codex-after-plan** | PostToolUse | プラン更新時に Codex デザインレビューを提案 |
+| **check-codex-before-write** | PostToolUse | 5 ファイル書き込みごとに Codex レビューを提案 |
+| **error-to-codex** | PostToolUse | コマンド失敗時に Codex デバッグを提案 |
+
+---
+
+## Plugins
+
+`config/plugins.json` で定義される外部プラグイン。ウィザードまたは非対話モードで選択・インストールされる。
+
+| プラグイン | マーケットプレイス | 説明 |
+|---|---|---|
+| security-guidance | claude-plugins-official | セキュリティベストプラクティスと脆弱性検出 |
+| commit-commands | claude-plugins-official | Git コミット・PR ワークフローコマンド |
+| pr-review-toolkit | claude-plugins-official | 専門エージェントによる包括的 PR レビュー |
+| feature-dev | claude-plugins-official | アーキテクチャ重視の機能開発ガイド |
+| code-review | claude-plugins-official | プルリクエストのコードレビュー |
+| claude-md-management | claude-plugins-official | CLAUDE.md の監査・改善 |
+| superpowers | claude-plugins-official | ブレスト・TDD・デバッグ等のスキルシステム |
+| code-simplifier | claude-plugins-official | コード簡素化・リファクタリング支援 |
+| document-skills | anthropic-agent-skills | ドキュメント作成・編集（DOCX, PDF, PPTX, XLSX） |
+| example-skills | anthropic-agent-skills | Anthropic 公式のクリエイティブ・技術・エンタープライズスキル集 |
+
+同名プラグインが複数マーケットプレイスに存在する場合は `name@marketplace` 形式で指定する。
+
+---
+
+## Rules
+
+Claude Code の振る舞いを規定するルールファイル。`~/.claude/rules/` にデプロイされる。
+
+| ルール | 内容 |
+|---|---|
+| **coding-style.md** | イミュータビリティ、ファイル分割、エラーハンドリング、入力バリデーション |
+| **git-workflow.md** | Conventional Commits、PR ワークフロー、TDD アプローチ |
+| **testing.md** | 80%+ カバレッジ必須、単体・統合・E2E テスト、TDD 強制 |
+| **security.md** | プロンプトインジェクション防御、シークレット保護、MCP サーバーセキュリティ |
+| **anti-patterns.md** | ハルシネーション防止、スコープ規律、完了整合性、ループ防止 |
+| **patterns.md** | API レスポンス形式、Repository パターン、カスタムフック |
+| **performance.md** | モデル選択戦略、コンテキストウィンドウ管理、Ultrathink 活用 |
+| **agents.md** | エージェント使い分けガイド、並列実行、マルチパースペクティブ分析 |
+| **permissions-guide.md** | ワイルドカード許可 / 明示的拒否の原則、サンドボックスモード |
+| **hooks.md** | フック種別（PreToolUse, PostToolUse, Stop）と設定方法 |
+
+---
+
+## Memory
+
+`memory/` にはベストプラクティスやアーキテクチャの参照情報が格納される。Claude Code のメモリシステム（`~/.claude/memory/`）にデプロイされ、セッション横断で知識を保持する。
+
+| ファイル | 内容 |
+|---|---|
+| **MEMORY.md** | メモリシステムのインデックス |
+| **architecture.md** | アーキテクチャパターンの参照情報 |
+| **best-practices.md** | 開発ベストプラクティス集 |
+| **context-engineering.md** | コンテキストエンジニアリング手法 |
+| **settings-reference.md** | Claude Code 設定リファレンス |
+
+---
+
+## カスタマイズ
+
+| やりたいこと | 方法 |
+|---|---|
+| エージェント追加 | `~/.claude/agents/` に `.md` ファイルを作成 |
+| ルール追加 | `~/.claude/rules/` に `.md` ファイルを作成 |
+| コマンド追加 | `~/.claude/commands/` に `.md` ファイルを作成 |
+| スキル追加 | `~/.claude/skills/{name}/` に `SKILL.md` + `references/` 等を作成 |
+| フック変更 | `~/.claude/settings.json` の `hooks` セクションを編集 |
+| CLAUDE.md 編集 | `<!-- END STARTER-KIT-MANAGED -->` マーカー以降のユーザーセクションに記述 |
+
+CLAUDE.md はキット管理セクション（`<!-- BEGIN/END STARTER-KIT-MANAGED -->`）とユーザーセクションに分離されている。キット更新時は管理セクションのみ上書きされ、ユーザーセクションは保持される。
+
+---
+
+## ディレクトリ構成
 
 ```
 claude-code-starter-kit/
-├── install.sh              # ワンライナーインストール用スクリプト
-├── install.ps1             # Windows PowerShell インストール用
-├── setup.sh                # メインセットアップ（ウィザード + デプロイ）
-├── uninstall.sh            # アンインストール用スクリプト
-├── lib/                    # 内部で使うシェルライブラリ
-│   ├── colors.sh           # 色付き表示
-│   ├── detect.sh           # OS の自動検出
-│   ├── prerequisites.sh    # 必要ツールの確認・インストール
-│   ├── template.sh         # テキスト置換エンジン
-│   └── json-builder.sh     # JSON ファイルの組み立て
-├── wizard/                 # 対話型ウィザード
-│   ├── wizard.sh           # ウィザードのロジック
-│   └── defaults.conf       # デフォルト設定値
-├── config/                 # 設定テンプレート
-├── features/               # オプション機能（各種フック定義）
-├── i18n/                   # 多言語対応
-│   ├── en/                 # 英語
-│   └── ja/                 # 日本語
-├── agents/                 # AI エージェント定義（9種）
-├── rules/                  # コーディングルール（10種）
-├── commands/               # スラッシュコマンド（17個）
-├── skills/                 # スキルモジュール（12個）
-└── memory/                 # ベストプラクティス記憶
+├── setup.sh                  # メインセットアップ（ウィザード + デプロイ）
+├── install.sh                # ワンライナーインストール用ブートストラップ
+├── install.ps1               # Windows PowerShell エントリポイント（WSL / Git Bash）
+├── uninstall.sh              # マニフェストベースのアンインストール
+├── wizard/
+│   ├── wizard.sh             # CLI パーサー + 対話型プロンプト
+│   └── defaults.conf         # デフォルト設定値
+├── lib/
+│   ├── colors.sh             # 色付き表示ユーティリティ
+│   ├── detect.sh             # OS / WSL / MSYS 自動検出
+│   ├── prerequisites.sh      # 依存ツールの確認・インストール
+│   ├── features.sh           # フィーチャーフラグ管理
+│   ├── template.sh           # CLAUDE.md テンプレートエンジン
+│   ├── json-builder.sh       # settings.json 組み立て（deep merge）
+│   ├── deploy.sh             # ビルド + デプロイ関数
+│   ├── snapshot.sh           # デプロイ済みファイルのスナップショット
+│   ├── merge.sh              # 3-way マージユーティリティ
+│   ├── update.sh             # 更新モードのロジック
+│   ├── dryrun.sh             # ドライラン実装
+│   └── codex-setup.sh        # Codex CLI セットアップ
+├── config/
+│   ├── settings-base.json    # settings.json のベーステンプレート
+│   ├── permissions.json      # パーミッション定義（allow / deny / セキュリティ硬化）
+│   └── plugins.json          # プラグイン・マーケットプレイス定義（10 プラグイン）
+├── features/                 # フック・設定フラグメント（17 機能）
+│   ├── safety-net/
+│   ├── auto-update/
+│   ├── pre-compact-commit/
+│   ├── memory-persistence/
+│   ├── strategic-compact/
+│   ├── git-push-review/
+│   ├── doc-blocker/
+│   ├── doc-size-guard/
+│   ├── pr-creation-log/
+│   ├── pre-commit-gate/
+│   ├── post-test-analysis/
+│   ├── harness-init/
+│   ├── statusline/
+│   ├── codex-cli/
+│   ├── check-codex-after-plan/
+│   ├── check-codex-before-write/
+│   └── error-to-codex/
+├── i18n/
+│   ├── en/                   # 英語（strings.sh + CLAUDE.md.base）
+│   └── ja/                   # 日本語
+├── agents/                   # エージェント定義（10 種）
+├── rules/                    # コーディングルール（10 種）
+├── commands/                 # スラッシュコマンド（19 個）
+│   └── templates/            # init-harness 用テックスタックテンプレート
+├── skills/                   # スキルモジュール（12 個）
+├── memory/                   # ベストプラクティス記憶
+├── profiles/
+│   └── standard.conf         # Standard プロファイル設定
+├── tests/                    # シェルスクリプトテスト
+│   ├── run-unit-tests.sh
+│   ├── run-scenarios.sh
+│   ├── helpers.sh
+│   ├── unit/                 # ユニットテスト
+│   └── fixtures/             # テストフィクスチャ
+└── docs/                     # 補足ドキュメント
 ```
 
 ---
 
-## 🛠 開発者向け
+## 開発者向け
 
-シェルスクリプトの静的解析には [ShellCheck](https://www.shellcheck.net/) を使用しています。PR 作成時に GitHub Actions で自動実行されます。ローカルで実行する場合:
+### 静的解析
 
 ```bash
-shellcheck setup.sh install.sh uninstall.sh lib/*.sh wizard/wizard.sh
+# 全スクリプトの ShellCheck（CI と同じ severity: warning）
+shellcheck -S warning setup.sh install.sh uninstall.sh lib/*.sh wizard/wizard.sh
 ```
 
+### テスト
+
+```bash
+# ユニットテスト
+bash tests/run-unit-tests.sh
+
+# シナリオテスト
+bash tests/run-scenarios.sh
+```
+
+### 新機能の追加手順
+
+1. `features/<name>/feature.json` と `hooks.json` を作成（フックは `"hooks": {}` 内にネスト）
+2. `wizard/wizard.sh` に変数初期化・`_CONFIG_ALLOWED_KEYS`・`save_config()` を追加
+3. `i18n/en/strings.sh` と `i18n/ja/strings.sh` に `STR_*` 文字列を追加
+4. 外部スクリプトがある場合は `deploy_hook_scripts()` に追加
+5. `uninstall.sh` に標準ディレクトリ外のクリーンアップを追加
+6. 3 パスで動作検証: fresh install / `setup.sh --update` / 保存済み config の再利用
+7. `CHANGELOG.md` を更新
+
 ---
 
-## 📋 更新履歴
+## ライセンス
 
-詳細な更新履歴は [CHANGELOG.md](CHANGELOG.md) をご覧ください。
-
----
-
-## 🙏 謝辞
-
-- ステータスラインの Braille Dots パターンは [逆瀬川さんの記事](https://nyosegawa.com/posts/claude-code-statusline-rate-limits/) を参考にしました
-
-## 📄 ライセンス
-
-MIT ライセンスです。詳しくは [LICENSE](LICENSE) をご確認ください。
+[MIT](LICENSE)
