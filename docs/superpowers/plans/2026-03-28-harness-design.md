@@ -949,29 +949,42 @@ STR_MIGRATION_HOOKS_TO_PROJECT="prettier-hooks と console-log-guard はプロ�
 
 - [ ] **Step 4: run_update() の Phase 1 完了後（settings.json マージ完了直後）に明示的な削除ステップを追加**
 
-挿入場所: Phase 1 の settings.json 更新ブロック（`updated_files+=("$current_settings")` の後、Phase 2 の前）。
+挿入場所: Phase 1 の settings.json 更新ブロック完了後、`_sync_settings_metadata "$current_settings"` の前。
+これにより、後続の全処理が clean な settings.json を参照する。
 
 ```bash
   # --- Migration: explicitly remove deprecated prettier/console-log hooks ---
   # The 3-way merge may preserve old hooks (especially in non-interactive mode
   # where "kit removed" entries are kept). We must explicitly strip them.
+  # Match by BOTH matcher pattern AND command content to avoid removing
+  # user-authored hooks that also happen to use prettier or console.log.
   if [[ "$_migrated_hooks" == "true" ]] && [[ -f "$current_settings" ]]; then
     local _cleaned
     _cleaned="$(jq '
-      # Remove PostToolUse hooks matching prettier or console.log
+      # Remove PostToolUse hooks matching the EXACT legacy kit signatures:
+      # - prettier-hooks: matcher contains "ts|tsx|js|jsx" AND command contains "prettier --write"
+      # - console-log-guard: matcher contains "ts|tsx|js|jsx" AND command contains "console\\.log"
       if .hooks.PostToolUse then
         .hooks.PostToolUse |= map(
           select(
-            (.hooks[]?.command | test("prettier|console\\\\.log")) | not
+            ((.matcher | test("ts\\|tsx\\|js\\|jsx")) and
+             (.hooks[]?.command | test("prettier --write"))) | not
+          )
+          | select(
+            ((.matcher | test("ts\\|tsx\\|js\\|jsx")) and
+             (.hooks[]?.command | test("console\\\\.log"))) | not
           )
         )
       else . end
       |
-      # Remove Stop hooks matching console.log (legacy residue)
+      # Remove Stop hooks matching legacy console-log-guard signature:
+      # matcher is "*" AND command contains "console.log" + "git diff --name-only"
       if .hooks.Stop then
         .hooks.Stop |= map(
           select(
-            (.hooks[]?.command | test("console\\\\.log")) | not
+            ((.matcher == "*") and
+             (.hooks[]?.command | test("console\\\\.log")) and
+             (.hooks[]?.command | test("git diff --name-only"))) | not
           )
         )
       else . end
@@ -979,10 +992,8 @@ STR_MIGRATION_HOOKS_TO_PROJECT="prettier-hooks と console-log-guard はプロ�
   fi
 ```
 
-This runs AFTER the 3-way merge completes, so it reliably removes deprecated hooks
-regardless of the merge strategy (interactive/non-interactive, user-modified or not).
-The jq filter selects hooks whose command does NOT match prettier/console.log patterns,
-effectively removing those entries. Hooks for other purposes are preserved.
+This uses combined matcher + command signature matching to target ONLY the known
+legacy kit hooks, not user-authored hooks that happen to mention prettier or console.log.
 
 - [ ] **Step 5: run_update() 関数の末尾（return 直前）に移行メッセージ表示を追加**
 
