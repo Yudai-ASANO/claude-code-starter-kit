@@ -947,25 +947,60 @@ STR_MIGRATION_HOOKS_TO_PROJECT="prettier-hooks と console-log-guard はプロ�
   fi
 ```
 
-- [ ] **Step 4: run_update() 関数の末尾（全フェーズ完了後、return 直前）に移行メッセージ表示を追加**
+- [ ] **Step 4: run_update() の Phase 1 完了後（settings.json マージ完了直後）に明示的な削除ステップを追加**
+
+挿入場所: Phase 1 の settings.json 更新ブロック（`updated_files+=("$current_settings")` の後、Phase 2 の前）。
 
 ```bash
-  # Show migration message if old hooks were detected
+  # --- Migration: explicitly remove deprecated prettier/console-log hooks ---
+  # The 3-way merge may preserve old hooks (especially in non-interactive mode
+  # where "kit removed" entries are kept). We must explicitly strip them.
+  if [[ "$_migrated_hooks" == "true" ]] && [[ -f "$current_settings" ]]; then
+    local _cleaned
+    _cleaned="$(jq '
+      # Remove PostToolUse hooks matching prettier or console.log
+      if .hooks.PostToolUse then
+        .hooks.PostToolUse |= map(
+          select(
+            (.hooks[]?.command | test("prettier|console\\\\.log")) | not
+          )
+        )
+      else . end
+      |
+      # Remove Stop hooks matching console.log (legacy residue)
+      if .hooks.Stop then
+        .hooks.Stop |= map(
+          select(
+            (.hooks[]?.command | test("console\\\\.log")) | not
+          )
+        )
+      else . end
+    ' "$current_settings")" && printf '%s\n' "$_cleaned" > "$current_settings"
+  fi
+```
+
+This runs AFTER the 3-way merge completes, so it reliably removes deprecated hooks
+regardless of the merge strategy (interactive/non-interactive, user-modified or not).
+The jq filter selects hooks whose command does NOT match prettier/console.log patterns,
+effectively removing those entries. Hooks for other purposes are preserved.
+
+- [ ] **Step 5: run_update() 関数の末尾（return 直前）に移行メッセージ表示を追加**
+
+```bash
+  # Show migration message if old hooks were detected and removed
   if [[ "$_migrated_hooks" == "true" ]]; then
     warn "${STR_MIGRATION_HOOKS_TO_PROJECT:-prettier-hooks and console-log-guard have moved to project-level. Run /init-harness in your project.}"
   fi
 ```
 
 Note: `warn` は `lib/colors.sh` で定義されている既存のヘルパー関数。
-新しい settings.json は build_settings_file() で生成されるが、そこには prettier-hooks / console-log-guard は
-もう含まれない（features が削除されているため）。よって update 後の settings.json からは自動的に除去される。
 
-- [ ] **Step 5: ShellCheck 検証**
+- [ ] **Step 6: ShellCheck 検証**
 
 Run: `shellcheck -S warning lib/update.sh`
 Expected: エラーなし
 
-- [ ] **Step 6: コミット**
+- [ ] **Step 7: コミット**
 
 ```bash
 git add lib/update.sh i18n/en/strings.sh i18n/ja/strings.sh
