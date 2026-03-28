@@ -9,10 +9,54 @@ Sequential agent workflow for complex tasks.
 ## Workflow Types
 
 ### feature
-Full feature implementation workflow:
+Full feature implementation workflow with harness pattern:
 ```
-planner -> tdd-guide -> code-reviewer -> security-reviewer
+planner -> [Generator: tdd-guide] -> qa-reviewer -> code-reviewer + security-reviewer
 ```
+
+#### Phase 1: Planning
+planner produces:
+- Implementation plan
+- **Executable Sprint Contract** (acceptance criteria with verifier commands)
+
+Sprint Contract format:
+```markdown
+## Sprint Contract
+### Acceptance Criteria
+| # | Criterion | Verifier Command | Expected Result |
+|---|-----------|-----------------|-----------------|
+| 1 | Feature works | npm test -- --grep "feature" | exit 0 |
+| 2 | Types clean | npx tsc --noEmit | exit 0 |
+```
+
+#### Phase 2: Generation
+Generator (tdd-guide) receives the plan + sprint contract and implements.
+Generator does NOT produce the evidence bundle.
+
+#### Phase 3: Evidence Collection (orchestrator)
+The orchestrator (you) collects evidence by running each verifier command
+from the sprint contract. Evidence is raw command output, not filtered.
+
+Evidence format:
+```markdown
+## Evidence (collected by orchestrator)
+### Criterion 1: [name]
+Command: [verifier command]
+Exit code: [actual]
+Stdout: [last 20 lines]
+```
+
+#### Phase 4: Evaluation
+qa-reviewer receives sprint contract + evidence and produces a grading report.
+
+**Repair Loop:**
+- If FAIL: repair instructions → Generator re-implements → re-collect evidence → re-evaluate
+- Max 3 iterations, then escalate to user
+
+#### Phase 5: Review (after qa-reviewer PASS)
+Run in parallel:
+- code-reviewer (quality)
+- security-reviewer (security)
 
 ### bugfix
 Bug investigation and fix workflow:
