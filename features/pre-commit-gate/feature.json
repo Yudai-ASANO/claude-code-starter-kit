@@ -1,0 +1,9 @@
+{
+  "name": "pre-commit-gate",
+  "displayName": "Pre-Commit Verification Gate",
+  "description": "Runs verification before git commit (advisory by default)",
+  "category": "harness",
+  "default": true,
+  "dependencies": [],
+  "conflicts": []
+}
