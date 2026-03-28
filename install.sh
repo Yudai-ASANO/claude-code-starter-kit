@@ -151,7 +151,7 @@ clone_or_update
 chmod +x "$INSTALL_DIR/setup.sh"
 chmod +x "$INSTALL_DIR/uninstall.sh" 2>/dev/null || true
 
-# Support NONINTERACTIVE env var (same convention as Homebrew)
+# Support NONINTERACTIVE env var
 _setup_args=("$@")
 if [[ -n "${NONINTERACTIVE:-}" ]]; then
   _has_ni=false

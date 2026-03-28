@@ -6,7 +6,7 @@
 #               _SETUP_ORIG_ARGS[], _SETUP_SCRIPT_PATH, NODE_MAJOR
 # Sets globals: _GNU_SED, _GNU_AWK (wrappers for GNU sed/awk)
 # Exports: check_prerequisites(), check_bash4(), _detect_bash4(),
-#          _sed(), _awk(), _brew_is_usable(), _ensure_homebrew()
+#          _sed(), _awk()
 # Dry-run: check_prerequisites has dry-run fast path (light tools only)
 set -euo pipefail
 
@@ -17,71 +17,6 @@ set -euo pipefail
 NODE_MAJOR="${NODE_MAJOR:-20}"
 
 # ---------------------------------------------------------------------------
-# Homebrew (macOS only)
-# ---------------------------------------------------------------------------
-
-# Check if the current user can write to Homebrew's prefix directory.
-# Returns 1 if brew is not in PATH or the prefix is not writable
-# (e.g., Homebrew installed by another user).
-_brew_is_usable() {
-  command -v brew &>/dev/null || return 1
-  local prefix
-  prefix="$(brew --prefix 2>/dev/null)" || return 1
-  [[ -n "$prefix" && -w "$prefix" ]]
-}
-
-# Ensure Homebrew is installed, in PATH, and writable by the current user.
-# On Apple Silicon, brew lives at /opt/homebrew/bin/brew.
-# On Intel, it lives at /usr/local/bin/brew.
-_ensure_homebrew() {
-  [[ "$DISTRO_FAMILY" != "macos" ]] && return 0
-
-  # Try to find brew in PATH or standard locations
-  if ! command -v brew &>/dev/null; then
-    local brew_bin=""
-    if [[ -x /opt/homebrew/bin/brew ]]; then
-      brew_bin="/opt/homebrew/bin/brew"
-    elif [[ -x /usr/local/bin/brew ]]; then
-      brew_bin="/usr/local/bin/brew"
-    fi
-    if [[ -n "$brew_bin" ]]; then
-      info "Adding Homebrew to PATH..."
-      eval "$("$brew_bin" shellenv)"
-    fi
-  fi
-
-  # If brew is found and usable (writable), we're done
-  if _brew_is_usable; then
-    return 0
-  fi
-
-  # Brew not found, or found but not writable (installed by another user)
-  if command -v brew &>/dev/null; then
-    warn "Homebrew found but not writable by current user (installed by another user)"
-  fi
-  info "Installing Homebrew for current user..."
-  local _brew_env=""
-  if [[ "${WIZARD_NONINTERACTIVE:-false}" == "true" ]]; then
-    _brew_env="NONINTERACTIVE=1"
-  fi
-  if env ${_brew_env} /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
-    # Add newly installed Homebrew to PATH
-    if [[ -x /opt/homebrew/bin/brew ]]; then
-      eval "$(/opt/homebrew/bin/brew shellenv)"
-    elif [[ -x /usr/local/bin/brew ]]; then
-      eval "$(/usr/local/bin/brew shellenv)"
-    fi
-    if _brew_is_usable; then
-      ok "Homebrew installed"
-      return 0
-    fi
-  fi
-
-  warn "Homebrew のインストールに失敗しました"
-  return 0  # Not fatal
-}
-
-# ---------------------------------------------------------------------------
 # Package manager wrappers
 # ---------------------------------------------------------------------------
 
@@ -89,12 +24,9 @@ _ensure_homebrew() {
 _pkg_install() {
   case "$DISTRO_FAMILY" in
     macos)
-      if _brew_is_usable; then
-        brew install "$@"
-      else
-        error "Cannot install $*: Homebrew is not available or not writable."
-        return 1
-      fi
+      error "Cannot install $* automatically on macOS."
+      error "Please install manually from the official website."
+      return 1
       ;;
     debian)
       sudo apt-get update -qq && sudo apt-get install -y "$@"
@@ -188,7 +120,7 @@ _detect_gnu_sed() {
     _GNU_SED="sed"
     return 0
   fi
-  # Check for gsed (brew install gnu-sed)
+  # Check for gsed (e.g., GNU sed installed as gsed)
   if command -v gsed &>/dev/null && gsed --version 2>/dev/null | grep -q "GNU sed"; then
     _GNU_SED="gsed"
     return 0
@@ -202,7 +134,7 @@ _detect_gnu_awk() {
     _GNU_AWK="awk"
     return 0
   fi
-  # Check for gawk (brew install gawk)
+  # Check for gawk
   if command -v gawk &>/dev/null && gawk --version 2>/dev/null | grep -q "GNU Awk"; then
     _GNU_AWK="gawk"
     return 0
@@ -217,7 +149,7 @@ check_gnu_sed() {
   fi
   # Try to install: macOS via gnu-sed, Linux distros typically have GNU sed
   case "$DISTRO_FAMILY" in
-    macos)  info "Installing GNU sed..."; _pkg_install gnu-sed ;;
+    macos)  warn "GNU sed not found. Please install manually." ;;
     debian) info "Installing GNU sed..."; _pkg_install sed ;;
     rhel)   info "Installing GNU sed..."; _pkg_install sed ;;
     alpine) info "Installing GNU sed..."; _pkg_install sed ;;
@@ -228,7 +160,7 @@ check_gnu_sed() {
   fi
   warn "GNU sed not found. Install manually:"
   case "$DISTRO_FAMILY" in
-    macos)  info "  brew install gnu-sed" ;;
+    macos)  info "  Install GNU sed: https://www.gnu.org/software/sed/" ;;
     debian) info "  sudo apt-get install sed" ;;
     alpine) info "  sudo apk add sed" ;;
     *)      info "  Install GNU sed for your platform" ;;
@@ -243,7 +175,7 @@ check_gnu_awk() {
   fi
   # Try to install: gawk on all platforms
   case "$DISTRO_FAMILY" in
-    macos)  info "Installing GNU awk..."; _pkg_install gawk ;;
+    macos)  warn "GNU awk not found. Please install manually." ;;
     debian) info "Installing GNU awk..."; _pkg_install gawk ;;
     rhel)   info "Installing GNU awk..."; _pkg_install gawk ;;
     alpine) info "Installing GNU awk..."; _pkg_install gawk ;;
@@ -254,7 +186,7 @@ check_gnu_awk() {
   fi
   warn "GNU awk not found. Install manually:"
   case "$DISTRO_FAMILY" in
-    macos)  info "  brew install gawk" ;;
+    macos)  info "  Install GNU awk: https://www.gnu.org/software/gawk/" ;;
     debian) info "  sudo apt-get install gawk" ;;
     alpine) info "  sudo apk add gawk" ;;
     *)      info "  Install GNU awk (gawk) for your platform" ;;
@@ -337,38 +269,10 @@ export NVM_DIR="$HOME/.nvm"
 ZSHRC
 }
 
-_persist_node_path() {
-  local node_bin="$1"
-  local rc_file
-  case "$(basename "${SHELL:-}")" in
-    zsh)  rc_file="$HOME/.zshrc" ;;
-    bash) rc_file="$HOME/.bashrc" ;;
-    *)    rc_file="$HOME/.profile" ;;
-  esac
-  [[ -f "$rc_file" ]] || touch "$rc_file"
-  if ! grep -q "$node_bin" "$rc_file" 2>/dev/null; then
-    printf '\n# Node.js (brew keg-only, added by claude-code-starter-kit)\nexport PATH="%s:$PATH"\n' "$node_bin" >> "$rc_file"
-  fi
-}
-
 _install_node() {
   case "$DISTRO_FAMILY" in
     macos)
-      if _brew_is_usable; then
-        brew install "node@${NODE_MAJOR}" 2>/dev/null || true
-        # node@XX is keg-only (not symlinked into PATH). Add its bin dir
-        # for the current session and persist it in the user's shell rc file.
-        local node_prefix
-        node_prefix="$(brew --prefix "node@${NODE_MAJOR}" 2>/dev/null || true)"
-        if [[ -n "$node_prefix" && -d "$node_prefix/bin" ]]; then
-          export PATH="$node_prefix/bin:$PATH"
-          _persist_node_path "$node_prefix/bin"
-        fi
-      fi
-      # Fall back to nvm if brew is not usable or brew install didn't work
-      if ! command -v node &>/dev/null; then
-        _install_node_via_nvm
-      fi
+      _install_node_via_nvm
       ;;
     debian)
       # Try NodeSource first, fall back to nvm
@@ -440,7 +344,7 @@ check_gh() {
   warn "GitHub CLI (gh) not found (optional)."
   warn "  Install: https://cli.github.com/"
   case "$DISTRO_FAMILY" in
-    macos)  warn "  Or: brew install gh" ;;
+    macos)  warn "  Or: https://github.com/cli/cli#installation" ;;
     debian) warn "  Or: https://github.com/cli/cli/blob/trunk/docs/install_linux.md" ;;
     rhel)   warn "  Or: sudo dnf install gh" ;;
     *)      ;;
@@ -555,7 +459,7 @@ check_prerequisites() {
   section "必要なツールを確認中 / Checking prerequisites"
 
   # Dry-run mode: only light prerequisites (git, jq, curl) are checked.
-  # Heavy installs (Homebrew, Node, etc.) are skipped entirely.
+  # Heavy installs (Node, etc.) are skipped entirely.
   # Interactive: offer to install missing light tools with user consent.
   # Non-interactive: list missing tools and abort without installing.
   if [[ "${DRY_RUN:-false}" == "true" ]]; then
@@ -616,9 +520,6 @@ check_prerequisites() {
     ok "必要なツールはすべて揃っています / All prerequisites satisfied (dry-run)"
     return 0
   fi
-
-  # macOS: try to ensure Homebrew is available (not fatal if it fails)
-  _ensure_homebrew
 
   # MSYS/Git Bash: ensure ~/.local/bin is in PATH for standalone tools
   if is_msys; then

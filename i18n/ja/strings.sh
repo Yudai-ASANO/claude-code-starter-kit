@@ -121,11 +121,6 @@ STR_FINAL_STEP3="3. 実行: claude"
 STR_FINAL_ENJOY="Happy coding!"
 STR_FINAL_RESTART_WARN="重要: セットアップで追加された設定を反映するため、ターミナルの再起動が必要です。"
 STR_FINAL_RESTART_HINT="現在のターミナルを閉じて、新しいターミナルを開いてから claude を実行してください。"
-STR_FINAL_INCOMPLETE_TITLE="セットアップは一部完了です"
-STR_FINAL_INCOMPLETE_HINT="管理者権限のあるアカウントで Homebrew をインストールしてから、再度セットアップを実行してください："
-STR_FINAL_INCOMPLETE_BREW="Homebrew のインストール："
-STR_FINAL_INCOMPLETE_RERUN="再セットアップ："
-
 # Post-deploy: Codex MCP setup
 STR_CODEX_SETUP_TITLE="Codex MCP のセットアップ"
 STR_CODEX_SETUP_NOTE="※ Codex MCP は ChatGPT ログインまたは OpenAI API キー認証で利用できます"

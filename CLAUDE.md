@@ -182,7 +182,7 @@ Section-aware behavior:
 
 Helper functions in `lib/template.sh`: `_has_kit_markers()`, `_extract_kit_section()`, `_extract_user_section()`, `_replace_kit_section()`.
 
-**Dry-run mode:** `--dry-run` previews what install/update would change without deploying any files. Light prerequisites (git, jq, curl) may be installed with user consent in interactive mode; `--non-interactive --dry-run` installs nothing. Heavy tools (Homebrew, Node, etc.) are never installed during dry-run. Implementation in `lib/dryrun.sh`:
+**Dry-run mode:** `--dry-run` previews what install/update would change without deploying any files. Light prerequisites (git, jq, curl) may be installed with user consent in interactive mode; `--non-interactive --dry-run` installs nothing. Heavy tools (Node, etc.) are never installed during dry-run. Implementation in `lib/dryrun.sh`:
 - `_dryrun_init()` copies real `~/.claude` into a temp sim dir, then `CLAUDE_DIR` is redirected so the normal flow executes against it
 - `_MERGE_INTERACTIVE=false` ensures no prompts are shown
 - Sim dir snapshot/manifest are temporary artifacts — discarded after report generation
@@ -208,12 +208,10 @@ Helper functions in `lib/template.sh`: `_has_kit_markers()`, `_extract_kit_secti
 
 ## Key Conventions
 
-- **Bash 4+ is required** for the main setup flow. Stage 1 bootstrap (`wizard/wizard.sh`, `lib/colors.sh`, `lib/detect.sh`, `lib/prerequisites.sh`) remains Bash 3.2 compatible for re-exec detection. Stage 2+ may use `declare -A`, `readarray`, etc. The kit auto-detects Bash 4+ and re-execs if the current shell is Bash 3.2 (e.g., macOS default `/bin/bash`). Users need `brew install bash` on macOS.
+- **Bash 4+ is required** for the main setup flow. Stage 1 bootstrap (`wizard/wizard.sh`, `lib/colors.sh`, `lib/detect.sh`, `lib/prerequisites.sh`) remains Bash 3.2 compatible for re-exec detection. Stage 2+ may use `declare -A`, `readarray`, etc. The kit auto-detects Bash 4+ and re-execs if the current shell is Bash 3.2 (e.g., macOS default `/bin/bash`). Users need Bash 4+ on macOS (install via package manager of choice).
 - **Variable naming**: `ENABLE_*` (feature toggles), `INSTALL_*` (component flags), `STR_*` (i18n strings), `_*` prefixed functions (private/internal)
 - **Boolean handling**: `_bool_normalize()` accepts true/1/yes/on → "true". Use `is_true()` for checks.
 - **No eval**: All dynamic variable assignment uses `printf -v` and `${!var}` (indirect expansion) to prevent injection.
-- **Keg-only brew formulas**: `brew install node@XX` etc. are keg-only (not symlinked into PATH). After install, resolve the bin dir via `brew --prefix <formula>`, export it to `PATH` for the current session, and persist it to the user's shell RC file via `_persist_node_path()`. See `lib/prerequisites.sh`.
-- **Homebrew PATH resolution**: Use `_ensure_homebrew` from `lib/prerequisites.sh` (not bare `command -v brew`) when brew is needed. It resolves `/opt/homebrew/bin/brew` and `/usr/local/bin/brew` paths that may not be in PATH during pipe execution (`curl | bash`). After calling `_ensure_homebrew`, always verify with `_brew_is_usable` before running `brew` commands.
 - **Windows interop from WSL/MSYS**: Use `powershell.exe -NoProfile -Command '...'` for Windows-side operations. Always `tr -d '\r'` on output to strip CRLF.
 - **Codex MCP scope**: Always use `claude mcp add -s user` (user scope, not project scope).
 - **Timeout portability**: Use `_run_with_timeout` wrapper (macOS lacks `timeout`).
@@ -224,7 +222,7 @@ Helper functions in `lib/template.sh`: `_has_kit_markers()`, `_extract_kit_secti
 - **RC file modification**: When modifying shell RC files (`.bashrc`, `.zshrc`), preserve original permissions with `stat` + `chmod` after `mktemp` + `mv` operations (since `umask 077` would change them to 0600).
 - **sed delimiter choice**: When using `sed` with `|` delimiter (`s|...|...|`), escape `&`, `\`, and `|` in replacement strings — do NOT escape `/`.
 - **Top-level scope in setup.sh**: The plugin install section (after line ~430) runs in global scope, not inside a function. Use `_` prefixed variables (e.g., `_p`, `_p_name`, `_registered_mps`) instead of `local`.
-- **NONINTERACTIVE env var**: `install.sh` supports `NONINTERACTIVE=1` (Homebrew convention) to auto-add `--non-interactive` flag for setup.sh.
+- **NONINTERACTIVE env var**: `install.sh` supports `NONINTERACTIVE=1` to auto-add `--non-interactive` flag for setup.sh.
 - **DRY_RUN variable**: `--dry-run` sets `DRY_RUN="true"`. In dry-run mode, `CLAUDE_DIR` is redirected to a temp sim dir so the normal deploy/update flow runs without touching real files. External operations (shell RC, plugins, Codex MCP, Claude CLI) are individually guarded and logged as `[WOULD RUN]`. Light prerequisites (git, jq, curl) may be installed with user consent in interactive mode; `--non-interactive --dry-run` installs nothing and aborts if tools are missing. Sim dir snapshot/manifest are temporary artifacts discarded after the summary report. The comparison basis is always "real `~/.claude` vs sim dir result".
 
 ## Security Hardening

@@ -159,11 +159,7 @@ _install_codex_cli() {
   info "$STR_CODEX_CLI_INSTALLING"
   local _codex_installed=false
 
-  if [[ "$(uname -s)" == "Darwin" ]] && command -v brew &>/dev/null; then
-    brew install codex 2>/dev/null && _codex_installed=true
-  fi
-
-  if [[ "$_codex_installed" != "true" ]] && command -v npm &>/dev/null; then
+  if command -v npm &>/dev/null; then
     local _npm_prefix
     _npm_prefix="$(npm config get prefix 2>/dev/null || echo '/usr/local')"
     if [[ -w "${_npm_prefix}/lib" ]]; then
@@ -187,9 +183,6 @@ _install_codex_cli() {
   fi
 
   warn "$STR_CODEX_CLI_FAILED"
-  if [[ "$(uname -s)" == "Darwin" ]]; then
-    info "  brew install codex"
-  fi
   info "  npm install -g @openai/codex"
   return 1
 }

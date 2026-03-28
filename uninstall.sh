@@ -126,7 +126,6 @@ _load_strings() {
       STR_CLI_UNINSTALL_ASK="Claude Code CLI もアンインストールしますか？ [y/N]"
       STR_CLI_UNINSTALL_NATIVE="ネイティブ版 Claude Code をアンインストール中..."
       STR_CLI_UNINSTALL_NPM="npm 版 Claude Code をアンインストール中..."
-      STR_CLI_UNINSTALL_BREW="Homebrew 版 Claude Code をアンインストール中..."
       STR_CLI_UNINSTALL_DONE="Claude Code CLI をアンインストールしました"
       STR_CLI_UNINSTALL_FAILED="Claude Code CLI のアンインストールに失敗しました。手動で削除してください。"
       STR_CLI_UNINSTALL_SKIP="Claude Code CLI のアンインストールをスキップしました"
@@ -147,7 +146,6 @@ _load_strings() {
       STR_CLI_UNINSTALL_ASK="Also uninstall Claude Code CLI? [y/N]"
       STR_CLI_UNINSTALL_NATIVE="Uninstalling native Claude Code..."
       STR_CLI_UNINSTALL_NPM="Uninstalling npm Claude Code..."
-      STR_CLI_UNINSTALL_BREW="Uninstalling Homebrew Claude Code..."
       STR_CLI_UNINSTALL_DONE="Claude Code CLI uninstalled"
       STR_CLI_UNINSTALL_FAILED="Failed to uninstall Claude Code CLI. Please remove it manually."
       STR_CLI_UNINSTALL_SKIP="Skipped Claude Code CLI uninstall"
@@ -334,14 +332,6 @@ if command -v claude &>/dev/null; then
           # npm installation
           info "$STR_CLI_UNINSTALL_NPM"
           if npm uninstall -g @anthropic-ai/claude-code 2>/dev/null; then
-            ok "$STR_CLI_UNINSTALL_DONE"
-          else
-            warn "$STR_CLI_UNINSTALL_FAILED"
-          fi
-        elif brew list claude-code &>/dev/null 2>&1; then
-          # Homebrew installation
-          info "$STR_CLI_UNINSTALL_BREW"
-          if brew uninstall claude-code 2>/dev/null; then
             ok "$STR_CLI_UNINSTALL_DONE"
           else
             warn "$STR_CLI_UNINSTALL_FAILED"

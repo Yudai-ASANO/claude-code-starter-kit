@@ -123,11 +123,6 @@ STR_FINAL_STEP3="3. Run: claude"
 STR_FINAL_ENJOY="Happy coding!"
 STR_FINAL_RESTART_WARN="Important: You must restart your terminal for the new settings to take effect."
 STR_FINAL_RESTART_HINT="Close this terminal and open a new one before running claude."
-STR_FINAL_INCOMPLETE_TITLE="Setup partially complete"
-STR_FINAL_INCOMPLETE_HINT="Install Homebrew with an admin account, then re-run setup:"
-STR_FINAL_INCOMPLETE_BREW="Install Homebrew:"
-STR_FINAL_INCOMPLETE_RERUN="Re-run setup:"
-
 # Post-deploy: Codex MCP setup
 STR_CODEX_SETUP_TITLE="Codex MCP Setup"
 STR_CODEX_SETUP_NOTE="Note: Codex MCP supports either ChatGPT sign-in or OpenAI API key authentication"

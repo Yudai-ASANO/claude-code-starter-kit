@@ -131,7 +131,7 @@ Claude Code をインストールしただけでは、まっさらな状態で�
 > **補足**: Windows の場合、WSL2（Windows Subsystem for Linux）を使ってセットアップを行います。
 > WSL2 が入っていなくても、セットアップ時に自動でインストールされます（管理者権限が必要です）。
 
-> **Bash 4+ 必須**: セットアップには Bash 4 以上が必要です。macOS のデフォルト `/bin/bash` は 3.2 ですが、`brew install bash` でインストールされた Bash 4+ を自動検出して再実行します。Linux / WSL では通常 Bash 4+ がインストール済みです。
+> **Bash 4+ 必須**: セットアップには Bash 4 以上が必要です。macOS のデフォルト `/bin/bash` は 3.2 ですが、Bash 4+ がインストールされていれば自動検出して再実行します。Linux / WSL では通常 Bash 4+ がインストール済みです。
 
 > **Linux について**: このキットは macOS と Windows を対象としています。Linux で利用する場合は、ディストリビューション（Ubuntu, Fedora 等）やデスクトップ環境（GNOME, KDE 等）に応じた調整が必要になる場合があります。方法 1 のワンライナーまたは方法 3 の手動インストールをお試しください。
 
@@ -709,7 +709,7 @@ CI/CD（自動デプロイ）やチーム全員の環境を統一したい場合
 # 方法 1: --non-interactive フラグ
 curl -fsSL https://raw.githubusercontent.com/cloudnative-co/claude-code-starter-kit/main/install.sh | bash -s -- --non-interactive
 
-# 方法 2: NONINTERACTIVE 環境変数（Homebrew と同じ規約）
+# 方法 2: NONINTERACTIVE 環境変数
 NONINTERACTIVE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/cloudnative-co/claude-code-starter-kit/main/install.sh)"
 ```
 
@@ -872,10 +872,6 @@ Codex MCP は **OpenAI の Codex（AI コーディングツール）を Claude C
 #### Codex MCP を後から有効にする方法
 
 1. Codex CLI をインストール：
-   ```bash
-   brew install codex
-   ```
-   代替:
    ```bash
    npm install -g @openai/codex
    ```

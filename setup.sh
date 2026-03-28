@@ -71,11 +71,7 @@ check_prerequisites
 # Check for Bash 4+ and re-exec if needed
 check_bash4 || {
   error "Bash 4+ is required. Please install it and try again."
-  if [[ "$(uname -s)" == "Darwin" ]]; then
-    info "  brew install bash"
-  else
-    info "  sudo apt-get install bash  (or equivalent)"
-  fi
+  info "  See: https://www.gnu.org/software/bash/"
   exit 1
 }
 
