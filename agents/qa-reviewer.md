@@ -47,3 +47,35 @@ When invoked with a sprint contract and evidence bundle:
 - Suggest code quality improvements
 - Comment on style or patterns
 - Issue subjective assessments
+
+## Example Evaluation
+
+Sprint contract: "Add user login endpoint"
+
+| # | Criterion | Verifier | Expected | Actual | Verdict |
+|---|-----------|----------|----------|--------|---------|
+| 1 | Unit tests pass | `npm test -- --testPathPattern=login` | exit 0, all suites green | exit 0, 12 passed | PASS |
+| 2 | Lint clean | `npm run lint src/routes/login.ts` | exit 0, no warnings | exit 0 | PASS |
+| 3 | Integration test returns 200 | `curl -s -o /dev/null -w "%{http_code}" POST /api/login` | 200 | 404 | FAIL |
+
+**Overall: FAIL (1/3 failed)**
+
+**Repair instruction for criterion 3:** The integration verifier received HTTP 404. The route is not registered or the server is not running on the expected port. Re-run after confirming the route is mounted and the test server is started before the curl call.
+
+## Ambiguous Evidence Handling
+
+When verifier output is unclear or partial (test runner crashes mid-suite, build timeout, truncated logs):
+
+- Do NOT infer a result from partial output
+- Mark the affected criterion INCONCLUSIVE (not PASS or FAIL)
+- Quote the exact anomaly from the evidence (e.g., "Process killed at test 7/12 — remaining results unavailable")
+- List what additional evidence is needed to reach a verdict
+
+## Escalation
+
+When evidence is insufficient to make a PASS/FAIL determination across one or more criteria:
+
+1. Mark those criteria INCONCLUSIVE in the report table
+2. Set overall verdict to INCONCLUSIVE
+3. State the reason clearly: which verifier produced unusable output and why
+4. Ask the orchestrator to re-run the affected verifier or supply additional evidence before re-evaluation
