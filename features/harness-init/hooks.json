@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "SessionStart": [{
+      "matcher": "*",
+      "hooks": [{
+        "type": "command",
+        "command": "__HOME__/.claude/hooks/harness-init/detect-stack.sh"
+      }]
+    }]
+  }
+}

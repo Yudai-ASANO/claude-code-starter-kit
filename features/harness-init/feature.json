@@ -1,0 +1,9 @@
+{
+  "name": "harness-init",
+  "displayName": "Harness Init Detection",
+  "description": "Detects project tech stack and suggests /init-harness setup",
+  "category": "harness",
+  "default": true,
+  "dependencies": [],
+  "conflicts": []
+}
