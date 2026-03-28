@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "_id": "harness:javascript:prettier",
+        "matcher": "tool == 'Edit' && tool_input.file_path matches '\\.(js|jsx)$'",
+        "hooks": [{
+          "type": "command",
+          "command": "#!/bin/bash\ninput=$(cat)\nfile_path=$(printf '%s' \"$input\" | jq -r '.tool_input.file_path // \"\"')\nif [ -n \"$file_path\" ] && [ -f \"$file_path\" ]; then\n  npx prettier --write \"$file_path\" 2>/dev/null >&2\nfi\nprintf '%s\\n' \"$input\""
+        }]
+      }
+    ]
+  }
+}

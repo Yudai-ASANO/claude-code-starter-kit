@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "_id": "harness:swift:swiftlint",
+        "matcher": "tool == 'Edit' && tool_input.file_path matches '\\.swift$'",
+        "hooks": [{
+          "type": "command",
+          "command": "#!/bin/bash\ninput=$(cat)\nfile_path=$(printf '%s' \"$input\" | jq -r '.tool_input.file_path // \"\"')\nif [ -n \"$file_path\" ] && [ -f \"$file_path\" ] && command -v swiftlint >/dev/null 2>&1; then\n  swiftlint lint --path \"$file_path\" --quiet 2>&1 | head -5 >&2\nfi\nprintf '%s\\n' \"$input\""
+        }]
+      }
+    ]
+  }
+}

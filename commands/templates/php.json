@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "_id": "harness:php:cs-fixer",
+        "matcher": "tool == 'Edit' && tool_input.file_path matches '\\.php$'",
+        "hooks": [{
+          "type": "command",
+          "command": "#!/bin/bash\ninput=$(cat)\nfile_path=$(printf '%s' \"$input\" | jq -r '.tool_input.file_path // \"\"')\nif [ -n \"$file_path\" ] && [ -f \"$file_path\" ] && command -v php-cs-fixer >/dev/null 2>&1; then\n  php-cs-fixer fix \"$file_path\" --quiet 2>&1 >&2\nfi\nprintf '%s\\n' \"$input\""
+        }]
+      }
+    ]
+  }
+}
