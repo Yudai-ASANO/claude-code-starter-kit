@@ -332,9 +332,10 @@ _detect_bash4() {
     return 0
   fi
 
-  # Search common locations
-  local candidate
-  for candidate in /opt/homebrew/bin/bash /usr/local/bin/bash /usr/bin/bash; do
+  # Search common locations + PATH lookup
+  local candidate path_bash
+  path_bash="$(command -v bash 2>/dev/null || true)"
+  for candidate in /opt/homebrew/bin/bash /usr/local/bin/bash /usr/bin/bash ${path_bash:+"$path_bash"}; do
     if [[ -x "$candidate" ]]; then
       local ver
       ver="$("$candidate" -c 'echo "${BASH_VERSINFO[0]}"' 2>/dev/null || echo "0")"
@@ -407,13 +408,15 @@ _add_to_path_now_and_persist() {
     *) export PATH="${dir}:${PATH}" ;;
   esac
 
-  # Persist to RC file
+  # Persist to RC file (skip if not writable, e.g. Nix Home Manager symlink)
   local rc_file
   rc_file="$(_get_shell_rc_file)"
-  [[ -f "$rc_file" ]] || touch "$rc_file"
+  [[ -f "$rc_file" ]] || touch "$rc_file" 2>/dev/null || return 0
 
   if ! grep -q "$dir" "$rc_file" 2>/dev/null; then
-    printf '\n# Claude Code CLI\nexport PATH="%s:$PATH"\n' "$dir" >> "$rc_file"
+    if [[ -w "$rc_file" ]]; then
+      printf '\n# Claude Code CLI\nexport PATH="%s:$PATH"\n' "$dir" >> "$rc_file"
+    fi
   fi
 }
 
