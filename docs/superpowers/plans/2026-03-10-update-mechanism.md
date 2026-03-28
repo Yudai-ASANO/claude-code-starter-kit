@@ -838,9 +838,6 @@ build_settings_to_file() {
   local hook_fragments=()
   local tmp_files=()
 
-  if is_true "$ENABLE_TMUX_HOOKS"; then
-    hook_fragments+=("$PROJECT_DIR/features/tmux-hooks/hooks.json")
-  fi
   if is_true "$ENABLE_DOC_BLOCKER"; then
     hook_fragments+=("$PROJECT_DIR/features/doc-blocker/hooks.json")
   fi

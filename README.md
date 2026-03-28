@@ -145,7 +145,6 @@ Claude Code をインストールしただけでは、まっさらな状態で�
 | 対話型ウィザード | 質問に答えるだけで最適な設定が選べる |
 | 3 つのプロファイル | 自分に合ったレベルの設定を選択 |
 | 日本語対応 | ウィザードもドキュメントも日本語 OK |
-| Ghostty ターミナル（macOS のみ） | 高機能ターミナルの自動インストール・設定 |
 | 非対話モード | CI/CD や自動化にも対応 |
 | クリーンアンインストール | 追加したものだけを安全に削除 |
 
@@ -407,7 +406,7 @@ Claude Code のチャットで `/` に続けて入力します。
 | `/handover` | セッション引き継ぎドキュメントの生成 |
 | `/update-kit` | スターターキットを手動で最新版に更新 |
 
-### 🪝 フック（安全装置・12個）
+### 🪝 フック（安全装置・11個）
 
 フックは **自動で動作する安全装置** です。コードを書いたり保存したりしたときに、自動でチェックが走ります。
 
@@ -415,7 +414,6 @@ Claude Code のチャットで `/` に続けて入力します。
 |---|---|
 | **Safety Net** | **破壊的な git/ファイルシステムコマンド（`git reset --hard`、`rm -rf` 等）を実行前にブロック** |
 | **自動アップデート** | **セッション開始時にスターターキットの最新版を自動で適用** |
-| Tmux リマインダー | 長時間コマンドに tmux の使用を提案 |
 | Git Push レビュー | コードを共有する前に確認を促す |
 | Doc ブロッカー | 不要なドキュメントファイルの作成を防止 |
 | Prettier 自動フォーマット | JS/TS ファイルを自動で見た目を整える |
@@ -516,51 +514,6 @@ Standard / Full プロファイルではおすすめのプラグインが自動�
 > **マルチマーケットプレイス**: 同名のプラグインが複数のマーケットプレイスに存在する場合（例: `pr-review-toolkit`）、
 > ウィザードでは `[claude-plugins-official]` / `[claude-code-plugins]` のようにマーケットプレイス名が表示されます。
 > 非対話モードでは `pr-review-toolkit@claude-code-plugins` のように `name@marketplace` 形式で指定できます。
-
-### 🖥️ Ghostty ターミナル（macOS のみ）
-
-**Ghostty** は、高速で美しいターミナルアプリです（macOS のみ対応）。
-Full プロファイル、または `--ghostty=true` オプションで有効にすると：
-
-- Ghostty アプリを自動インストール（Homebrew 経由）
-- 日本語対応フォント（HackGen NF）を自動インストール
-- Claude Code に最適化された設定ファイルを自動配置
-  - Quick Terminal（ホットキーで即座にターミナルを開く）
-  - Catppuccin Mocha テーマ
-  - Shift+Enter でのマルチライン入力
-
-> **注意**: 現在、Ghostty の自動インストールは macOS のみ対応しています。
-
-### 🔤 プログラミングフォント（macOS / Windows）
-
-Claude Code をターミナルで快適に使うための **プログラミング用フォント** を自動インストールします。
-Standard / Full プロファイルでデフォルト有効です。`--fonts=true` オプションでも有効にできます。
-
-| フォント | 特徴 |
-|---|---|
-| **IBM Plex Mono** | IBM 開発の等幅フォント。可読性が高くコーディングに最適 |
-| **HackGen NF（HackGen35 Console NF）** | 日本語対応のプログラミングフォント + Nerd Fonts アイコン付き |
-
-#### インストール方法（OS別）
-
-| OS | 方法 |
-|---|---|
-| **macOS** | Homebrew cask で自動インストール。すべてのアプリですぐに使える |
-| **Windows（WSL / MSYS）** | PowerShell 経由で Windows 側のユーザーフォントディレクトリに自動インストール |
-
-#### Windows Terminal のフォント自動適用
-
-Windows では、フォントのインストール後に **Windows Terminal の設定（`settings.json`）も自動で書き換え**、デフォルトのフォントを `HackGen35 Console NF` に設定します。変更前のバックアップは `settings.json.bak` として保存されるので安心です。
-
-Windows Terminal がインストールされていない場合や、自動設定に失敗した場合は、以下の手順で手動設定できます：
-
-1. Windows Terminal を開く
-2. `Ctrl + ,`（設定）を開く
-3. **プロファイル** → **既定値** → **外観** を選択
-4. **フォント フェイス** を **`HackGen35 Console NF`**（または `IBM Plex Mono`）に変更
-5. 保存して閉じる
-
-> **ヒント**: HackGen35 Console NF は日本語の表示幅が半角 3：全角 5 の比率で、ターミナルでの日本語表示がきれいに揃います。Nerd Fonts 対応なのでアイコン表示にも対応しています。
 
 ---
 
@@ -771,14 +724,6 @@ NONINTERACTIVE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/cloudna
 
 > 日本語、VS Code エディタで自動セットアップします。
 
-### Ghostty も一緒にセットアップ（macOS のみ）
-
-```bash
-./setup.sh --non-interactive --ghostty=true
-```
-
-> Ghostty ターミナルのインストールと設定も含めてセットアップします（macOS のみ）。
-
 ### すべてのオプションを細かく指定
 
 ```bash
@@ -788,8 +733,7 @@ NONINTERACTIVE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/cloudna
   --new-init=true \
   --codex-mcp=false \
   --commit-attribution=false \
-  --ghostty=true \
-  --hooks=safety-net,auto-update,tmux,git-push,prettier,console,memory,compact,pr-log,pre-commit \
+  --hooks=safety-net,auto-update,git-push,prettier,console,memory,compact,pr-log,pre-commit \
   --plugins=security-guidance,commit-commands,pr-review-toolkit@claude-plugins-official,pr-review-toolkit@claude-code-plugins
 ```
 
@@ -1010,16 +954,13 @@ claude-code-starter-kit/
 │   ├── colors.sh           # 色付き表示
 │   ├── detect.sh           # OS の自動検出
 │   ├── prerequisites.sh    # 必要ツールの確認・インストール
-│   ├── ghostty.sh          # Ghostty セットアップ（macOS のみ）
 │   ├── template.sh         # テキスト置換エンジン
 │   └── json-builder.sh     # JSON ファイルの組み立て
 ├── wizard/                 # 対話型ウィザード
 │   ├── wizard.sh           # ウィザードのロジック
 │   └── defaults.conf       # デフォルト設定値
 ├── config/                 # 設定テンプレート
-├── features/               # オプション機能
-│   ├── ghostty/            # Ghostty ターミナル設定（macOS のみ）
-│   └── .../                # 各種フック定義
+├── features/               # オプション機能（各種フック定義）
 ├── i18n/                   # 多言語対応
 │   ├── en/                 # 英語
 │   └── ja/                 # 日本語

@@ -30,7 +30,7 @@ NONINTERACTIVE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/cloudna
 shellcheck -S warning setup.sh install.sh uninstall.sh lib/*.sh wizard/wizard.sh
 
 # Validate a single file
-shellcheck lib/ghostty.sh
+shellcheck lib/deploy.sh
 
 # Validate plugins.json
 jq . config/plugins.json
@@ -67,8 +67,6 @@ install.ps1 (Windows: WSL2 setup + clone repo via WSL + bootstrap)
         → build_claude_md() — template engine assembles ~/.claude/CLAUDE.md
         → build_settings_file() — jq merges base JSON + permissions + hook fragments → settings.json
       → deploy files to ~/.claude/{agents,rules,commands,skills,memory}/
-      → lib/ghostty.sh (Ghostty install + config, macOS only, if enabled)
-      → lib/fonts.sh (cross-platform font install + Windows Terminal auto-config)
       → write_manifest() — tracks deployed files for uninstall
       → _write_snapshot() — saves deployed files for future update comparison
       → plugin marketplace registration + install (multi-marketplace)
@@ -81,7 +79,7 @@ install.sh (re-run with manifest v2 + snapshot)
       → write_manifest() — updates manifest v2
 ```
 
-Libraries sourced by `setup.sh` in order: `wizard/wizard.sh`, `lib/colors.sh`, `lib/detect.sh`, `lib/prerequisites.sh`, `lib/features.sh`, `lib/template.sh`, `lib/json-builder.sh`, `lib/snapshot.sh`, `lib/merge.sh`, `lib/update.sh`, `lib/dryrun.sh`, `lib/deploy.sh`, `lib/ghostty.sh`, `lib/fonts.sh`.
+Libraries sourced by `setup.sh` in order: `wizard/wizard.sh`, `lib/colors.sh`, `lib/detect.sh`, `lib/prerequisites.sh`, `lib/features.sh`, `lib/template.sh`, `lib/json-builder.sh`, `lib/snapshot.sh`, `lib/merge.sh`, `lib/update.sh`, `lib/dryrun.sh`, `lib/deploy.sh`.
 
 ### i18n
 
@@ -109,7 +107,7 @@ Each feature in `features/*/` has a `hooks.json` containing Claude Code hook def
 **IMPORTANT: Hook types (`SessionStart`, `PreToolUse`, `PostToolUse`, `PreCompact`, `Stop`, `Notification`) MUST be nested inside a `"hooks"` key in hooks.json.** Claude Code reads hooks from `settings.json.hooks.*`, not from the top level. Top-level settings keys (`env`, `statusLine`, etc.) remain at the root.
 
 Three fragment styles exist:
-- **Inline hooks**: bash commands embedded as escaped JSON strings in `hooks.json` `"command"` fields, nested inside `"hooks"` (e.g., `features/tmux-hooks/hooks.json`)
+- **Inline hooks**: bash commands embedded as escaped JSON strings in `hooks.json` `"command"` fields, nested inside `"hooks"` (e.g., `features/doc-blocker/hooks.json`)
 - **External script hooks**: `hooks.json` references a script path with `__HOME__` token inside `"hooks"`, (e.g., `"hooks": {"PreCompact": [{"hooks": [{"command": "__HOME__/.claude/hooks/memory-persistence/pre-compact.sh"}]}]}`). These scripts are deployed by `deploy_hook_scripts()` to `~/.claude/hooks/<feature>/` with `chmod +x`. Both `.sh` and `.py` scripts are supported.
 - **Top-level settings**: `hooks.json` can contain any top-level settings key alongside `"hooks"`. The jq deep-merge applies at root level, so `{"statusLine": {...}}` and `{"env": {...}}` merge correctly (e.g., `features/statusline/hooks.json`, `features/safety-net/hooks.json`).
 
@@ -118,23 +116,6 @@ Three fragment styles exist:
 2. Iteratively merge each hook fragment via `merge_deep()` — a recursive jq function that concatenates arrays (e.g., `PreCompact` entries from `memory-persistence` and `pre-compact-commit` coexist) while deep-merging objects and replacing scalars
 3. `replace_home_path()` substitutes `__HOME__` → actual `$HOME` in all string values
 4. Final `validate_json()` check before writing output
-
-### Ghostty Installation (`lib/ghostty.sh`)
-
-macOS only. The install flow handles several edge cases:
-
-1. **Existing install detection**: Checks `[[ -x "/Applications/Ghostty.app/Contents/MacOS/ghostty" ]]` (actual binary, not just directory or `command -v`). This prevents false positives from leftover directories, broken symlinks, or unrelated CLI tools.
-2. **brew cask stale registry**: After `brew install --cask ghostty`, verifies the binary actually exists. If the cask was registered but the `.app` was deleted, falls back to `brew reinstall --cask ghostty`.
-3. **Gatekeeper quarantine**: Always runs `xattr -d com.apple.quarantine /Applications/Ghostty.app` after install (and on re-runs for existing installs) to prevent the "Apple could not verify" dialog on first launch.
-4. **HackGen NF font**: Tries brew first, falls back to direct download from GitHub Releases to `~/Library/Fonts/`.
-
-### Cross-Platform Font Installation (`lib/fonts.sh`)
-
-Installs IBM Plex Mono and HackGen NF with layered fallbacks:
-- **macOS**: Homebrew cask → direct download (`curl` + `unzip` to `~/Library/Fonts/`)
-- **Windows (WSL/MSYS)**: `_is_font_installed_windows()` checks `%LOCALAPPDATA%\Microsoft\Windows\Fonts`; `_install_font_windows()` runs PowerShell to download, extract, and register fonts + HKCU registry.
-
-Windows Terminal font configuration (`_configure_windows_terminal_font()`) runs **independently of font install success** — it checks if HackGen NF font files exist on disk and configures WT regardless of whether fonts were installed in this run or a previous one. Creates `.bak` backup before modifying. Returns exit codes: 0=OK, 2=NOT_FOUND (WT not installed), 1=FAILED.
 
 ### Bootstrap Safety (`install.sh`)
 
@@ -206,7 +187,7 @@ Helper functions in `lib/template.sh`: `_has_kit_markers()`, `_extract_kit_secti
 - `_MERGE_INTERACTIVE=false` ensures no prompts are shown
 - Sim dir snapshot/manifest are temporary artifacts — discarded after report generation
 - Diff/summary comparison basis is always "real `~/.claude` (current) vs sim dir (simulated)"
-- External side effects (Ghostty, fonts, shell RC, plugins, Codex MCP, Claude CLI) are individually guarded and logged as `[WOULD RUN]` entries via `_dryrun_log()`
+- External side effects (shell RC, plugins, Codex MCP, Claude CLI) are individually guarded and logged as `[WOULD RUN]` entries via `_dryrun_log()`
 - After the deploy flow completes in sim dir, `_dryrun_collect_file_changes()` walks the sim dir to find CREATE/MODIFY entries, then `_dryrun_show_results()` displays the grouped summary + settings.json unified diff
 
 ### Deploy Targets
@@ -231,12 +212,9 @@ Helper functions in `lib/template.sh`: `_has_kit_markers()`, `_extract_kit_secti
 - **Variable naming**: `ENABLE_*` (feature toggles), `INSTALL_*` (component flags), `STR_*` (i18n strings), `_*` prefixed functions (private/internal)
 - **Boolean handling**: `_bool_normalize()` accepts true/1/yes/on → "true". Use `is_true()` for checks.
 - **No eval**: All dynamic variable assignment uses `printf -v` and `${!var}` (indirect expansion) to prevent injection.
-- **Ghostty detection**: Use `[[ -x "/Applications/Ghostty.app/Contents/MacOS/ghostty" ]]` to detect Ghostty. Never use `-d "/Applications/Ghostty.app"` or `command -v ghostty` (both produce false positives).
-- **Platform guards for Ghostty**: Use `[[ "$(uname -s)" == "Darwin" ]]`, not `is_wsl`/`is_msys` (WSL detection can be unreliable).
-- **Font install fallback pattern**: Always try brew first, then fall back to direct download (`curl` + `unzip`) so installs succeed without Homebrew.
 - **Keg-only brew formulas**: `brew install node@XX` etc. are keg-only (not symlinked into PATH). After install, resolve the bin dir via `brew --prefix <formula>`, export it to `PATH` for the current session, and persist it to the user's shell RC file via `_persist_node_path()`. See `lib/prerequisites.sh`.
 - **Homebrew PATH resolution**: Use `_ensure_homebrew` from `lib/prerequisites.sh` (not bare `command -v brew`) when brew is needed. It resolves `/opt/homebrew/bin/brew` and `/usr/local/bin/brew` paths that may not be in PATH during pipe execution (`curl | bash`). After calling `_ensure_homebrew`, always verify with `_brew_is_usable` before running `brew` commands.
-- **Windows interop from WSL/MSYS**: Use `powershell.exe -NoProfile -Command '...'` for Windows-side operations (font install, WT config). Always `tr -d '\r'` on output to strip CRLF.
+- **Windows interop from WSL/MSYS**: Use `powershell.exe -NoProfile -Command '...'` for Windows-side operations. Always `tr -d '\r'` on output to strip CRLF.
 - **Codex MCP scope**: Always use `claude mcp add -s user` (user scope, not project scope).
 - **Timeout portability**: Use `_run_with_timeout` wrapper (macOS lacks `timeout`).
 - **Config persistence**: `~/.claude-starter-kit.conf` uses `key="value"` format, parsed by `_safe_source_config()` (allowlisted key=value parser, never sourced as shell code).
@@ -247,7 +225,7 @@ Helper functions in `lib/template.sh`: `_has_kit_markers()`, `_extract_kit_secti
 - **sed delimiter choice**: When using `sed` with `|` delimiter (`s|...|...|`), escape `&`, `\`, and `|` in replacement strings — do NOT escape `/`.
 - **Top-level scope in setup.sh**: The plugin install section (after line ~430) runs in global scope, not inside a function. Use `_` prefixed variables (e.g., `_p`, `_p_name`, `_registered_mps`) instead of `local`.
 - **NONINTERACTIVE env var**: `install.sh` supports `NONINTERACTIVE=1` (Homebrew convention) to auto-add `--non-interactive` flag for setup.sh.
-- **DRY_RUN variable**: `--dry-run` sets `DRY_RUN="true"`. In dry-run mode, `CLAUDE_DIR` is redirected to a temp sim dir so the normal deploy/update flow runs without touching real files. External operations (Ghostty, fonts, shell RC, plugins, Codex MCP, Claude CLI) are individually guarded and logged as `[WOULD RUN]`. Light prerequisites (git, jq, curl) may be installed with user consent in interactive mode; `--non-interactive --dry-run` installs nothing and aborts if tools are missing. Sim dir snapshot/manifest are temporary artifacts discarded after the summary report. The comparison basis is always "real `~/.claude` vs sim dir result".
+- **DRY_RUN variable**: `--dry-run` sets `DRY_RUN="true"`. In dry-run mode, `CLAUDE_DIR` is redirected to a temp sim dir so the normal deploy/update flow runs without touching real files. External operations (shell RC, plugins, Codex MCP, Claude CLI) are individually guarded and logged as `[WOULD RUN]`. Light prerequisites (git, jq, curl) may be installed with user consent in interactive mode; `--non-interactive --dry-run` installs nothing and aborts if tools are missing. Sim dir snapshot/manifest are temporary artifacts discarded after the summary report. The comparison basis is always "real `~/.claude` vs sim dir result".
 
 ## Security Hardening
 

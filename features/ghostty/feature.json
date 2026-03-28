@@ -1,9 +1,0 @@
-{
-  "name": "ghostty",
-  "displayName": "Ghostty Terminal Setup",
-  "description": "Install Ghostty terminal emulator and configure it with optimized settings for Claude Code",
-  "category": "terminal",
-  "default": false,
-  "dependencies": [],
-  "conflicts": []
-}

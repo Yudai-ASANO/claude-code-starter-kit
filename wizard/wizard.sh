@@ -29,7 +29,6 @@ INSTALL_SKILLS="${INSTALL_SKILLS:-}"
 INSTALL_MEMORY="${INSTALL_MEMORY:-}"
 
 ENABLE_CODEX_MCP="${ENABLE_CODEX_MCP:-}"
-ENABLE_TMUX_HOOKS="${ENABLE_TMUX_HOOKS:-}"
 ENABLE_GIT_PUSH_REVIEW="${ENABLE_GIT_PUSH_REVIEW:-}"
 ENABLE_DOC_BLOCKER="${ENABLE_DOC_BLOCKER:-}"
 ENABLE_PRETTIER_HOOKS="${ENABLE_PRETTIER_HOOKS:-}"
@@ -41,8 +40,6 @@ ENABLE_PRE_COMPACT_COMMIT="${ENABLE_PRE_COMPACT_COMMIT:-}"
 ENABLE_SAFETY_NET="${ENABLE_SAFETY_NET:-}"
 ENABLE_AUTO_UPDATE="${ENABLE_AUTO_UPDATE:-}"
 ENABLE_STATUSLINE="${ENABLE_STATUSLINE:-}"
-ENABLE_GHOSTTY_SETUP="${ENABLE_GHOSTTY_SETUP:-}"
-ENABLE_FONTS_SETUP="${ENABLE_FONTS_SETUP:-}"
 ENABLE_DOC_SIZE_GUARD="${ENABLE_DOC_SIZE_GUARD:-}"
 
 SELECTED_PLUGINS="${SELECTED_PLUGINS:-}"
@@ -132,7 +129,7 @@ _language_label() {
 # ---------------------------------------------------------------------------
 
 # Allowed config variable names (used by _safe_source_config for allowlist validation)
-_CONFIG_ALLOWED_KEYS="LANGUAGE EDITOR_CHOICE COMMIT_ATTRIBUTION ENABLE_NEW_INIT INSTALL_AGENTS INSTALL_RULES INSTALL_COMMANDS INSTALL_SKILLS INSTALL_MEMORY ENABLE_CODEX_MCP ENABLE_TMUX_HOOKS ENABLE_GIT_PUSH_REVIEW ENABLE_DOC_BLOCKER ENABLE_PRETTIER_HOOKS ENABLE_CONSOLE_LOG_GUARD ENABLE_MEMORY_PERSISTENCE ENABLE_STRATEGIC_COMPACT ENABLE_PR_CREATION_LOG ENABLE_PRE_COMPACT_COMMIT ENABLE_SAFETY_NET ENABLE_AUTO_UPDATE ENABLE_STATUSLINE ENABLE_GHOSTTY_SETUP ENABLE_FONTS_SETUP ENABLE_DOC_SIZE_GUARD SELECTED_PLUGINS"
+_CONFIG_ALLOWED_KEYS="LANGUAGE EDITOR_CHOICE COMMIT_ATTRIBUTION ENABLE_NEW_INIT INSTALL_AGENTS INSTALL_RULES INSTALL_COMMANDS INSTALL_SKILLS INSTALL_MEMORY ENABLE_CODEX_MCP ENABLE_GIT_PUSH_REVIEW ENABLE_DOC_BLOCKER ENABLE_PRETTIER_HOOKS ENABLE_CONSOLE_LOG_GUARD ENABLE_MEMORY_PERSISTENCE ENABLE_STRATEGIC_COMPACT ENABLE_PR_CREATION_LOG ENABLE_PRE_COMPACT_COMMIT ENABLE_SAFETY_NET ENABLE_AUTO_UPDATE ENABLE_STATUSLINE ENABLE_DOC_SIZE_GUARD SELECTED_PLUGINS"
 
 # Safe key=value parser: reads a config file line-by-line and only sets
 # variables whose names appear in the allowlist. This replaces the previous
@@ -190,11 +187,10 @@ _CONFIG_SAVE_KEYS=(
   ""
   INSTALL_AGENTS INSTALL_RULES INSTALL_COMMANDS INSTALL_SKILLS INSTALL_MEMORY
   ""
-  ENABLE_CODEX_MCP ENABLE_TMUX_HOOKS ENABLE_GIT_PUSH_REVIEW ENABLE_DOC_BLOCKER
+  ENABLE_CODEX_MCP ENABLE_GIT_PUSH_REVIEW ENABLE_DOC_BLOCKER
   ENABLE_PRETTIER_HOOKS ENABLE_CONSOLE_LOG_GUARD ENABLE_MEMORY_PERSISTENCE
   ENABLE_STRATEGIC_COMPACT ENABLE_PR_CREATION_LOG ENABLE_PRE_COMPACT_COMMIT
-  ENABLE_SAFETY_NET ENABLE_AUTO_UPDATE ENABLE_STATUSLINE ENABLE_GHOSTTY_SETUP
-  ENABLE_FONTS_SETUP ENABLE_DOC_SIZE_GUARD
+  ENABLE_SAFETY_NET ENABLE_AUTO_UPDATE ENABLE_STATUSLINE ENABLE_DOC_SIZE_GUARD
   ""
   SELECTED_PLUGINS
 )
@@ -432,7 +428,6 @@ _compute_selected_plugins() {
 HOOK_KEYS=(
   "ENABLE_SAFETY_NET"
   "ENABLE_AUTO_UPDATE"
-  "ENABLE_TMUX_HOOKS"
   "ENABLE_GIT_PUSH_REVIEW"
   "ENABLE_DOC_BLOCKER"
   "ENABLE_PRETTIER_HOOKS"
@@ -453,7 +448,6 @@ _init_hook_labels() {
   HOOK_LABELS=(
     "${STR_HOOKS_SAFETY_NET:-Safety Net - Block destructive git/filesystem commands}"
     "${STR_HOOKS_AUTO_UPDATE:-Auto Update - Automatically update starter kit on session start}"
-    "$STR_HOOKS_TMUX"
     "$STR_HOOKS_GIT_PUSH"
     "$STR_HOOKS_DOC_BLOCK"
     "$STR_HOOKS_PRETTIER"
@@ -479,7 +473,6 @@ _apply_hooks_csv() {
     case "$item" in
       safety-net)  ENABLE_SAFETY_NET="true" ;;
       auto-update) ENABLE_AUTO_UPDATE="true" ;;
-      tmux)        ENABLE_TMUX_HOOKS="true" ;;
       git-push)   ENABLE_GIT_PUSH_REVIEW="true" ;;
       doc-block)  ENABLE_DOC_BLOCKER="true" ;;
       prettier)   ENABLE_PRETTIER_HOOKS="true" ;;
@@ -525,10 +518,6 @@ parse_cli_args() {
       --codex-mcp)       shift; _set_bool ENABLE_CODEX_MCP "${1:-}"; _CLI_OVERRIDES+=("ENABLE_CODEX_MCP") ;;
       --commit-attribution=*) _set_bool COMMIT_ATTRIBUTION "${arg#*=}"; _CLI_OVERRIDES+=("COMMIT_ATTRIBUTION") ;;
       --commit-attribution)   shift; _set_bool COMMIT_ATTRIBUTION "${1:-}"; _CLI_OVERRIDES+=("COMMIT_ATTRIBUTION") ;;
-      --ghostty=*)     _set_bool ENABLE_GHOSTTY_SETUP "${arg#*=}"; _CLI_OVERRIDES+=("ENABLE_GHOSTTY_SETUP") ;;
-      --ghostty)       shift; _set_bool ENABLE_GHOSTTY_SETUP "${1:-}"; _CLI_OVERRIDES+=("ENABLE_GHOSTTY_SETUP") ;;
-      --fonts=*)       _set_bool ENABLE_FONTS_SETUP "${arg#*=}"; _CLI_OVERRIDES+=("ENABLE_FONTS_SETUP") ;;
-      --fonts)         shift; _set_bool ENABLE_FONTS_SETUP "${1:-}"; _CLI_OVERRIDES+=("ENABLE_FONTS_SETUP") ;;
       --hooks=*)
         _apply_hooks_csv "${arg#*=}"
         ;;
@@ -657,15 +646,6 @@ _step_editor() {
   esac
 }
 
-_step_ghostty() {
-  # Ghostty is macOS only — skip on all non-macOS platforms
-  if [[ "$(uname -s)" != "Darwin" ]]; then ENABLE_GHOSTTY_SETUP="false"; return; fi
-}
-
-_step_fonts() {
-  return
-}
-
 _step_hooks() {
   _init_hook_labels
 
@@ -790,10 +770,6 @@ _step_confirm() {
   printf "%-20s : %s\n" "$STR_CONFIRM_CODEX" "$(_bool_label_enabled "$ENABLE_CODEX_MCP")"
   printf "%-20s : %s\n" "$STR_CONFIRM_NEW_INIT" "$(_bool_label_enabled "$ENABLE_NEW_INIT")"
   printf "%-20s : %s\n" "$STR_CONFIRM_EDITOR" "$(_editor_label "$EDITOR_CHOICE")"
-  if [[ "$(uname -s)" == "Darwin" ]]; then
-    printf "%-20s : %s\n" "$STR_CONFIRM_GHOSTTY" "$(_bool_label_enabled "$ENABLE_GHOSTTY_SETUP")"
-  fi
-  printf "%-20s : %s\n" "$STR_CONFIRM_FONTS" "$(_bool_label_enabled "$ENABLE_FONTS_SETUP")"
   printf "%-20s : %s\n" "$STR_CONFIRM_STATUSLINE" "$(_bool_label_enabled "${ENABLE_STATUSLINE:-false}")"
 
   # Hooks summary
@@ -861,13 +837,6 @@ _fill_noninteractive_defaults() {
   [[ -z "$COMMIT_ATTRIBUTION" ]] && COMMIT_ATTRIBUTION="false"
   [[ -z "$ENABLE_NEW_INIT" ]] && ENABLE_NEW_INIT="true"
   [[ -z "${ENABLE_STATUSLINE:-}" ]] && ENABLE_STATUSLINE="true"
-  [[ -z "$ENABLE_GHOSTTY_SETUP" ]] && ENABLE_GHOSTTY_SETUP="false"
-  [[ -z "$ENABLE_FONTS_SETUP" ]] && ENABLE_FONTS_SETUP="false"
-
-  # Force-disable Ghostty on non-macOS platforms
-  if [[ "$(uname -s)" != "Darwin" ]]; then
-    ENABLE_GHOSTTY_SETUP="false"
-  fi
 
   # Compute plugins if not already set
   if [[ -z "$SELECTED_PLUGINS" ]]; then
@@ -947,8 +916,6 @@ run_wizard() {
     COMMIT_ATTRIBUTION=""
     ENABLE_NEW_INIT=""
     ENABLE_CODEX_MCP=""
-    ENABLE_GHOSTTY_SETUP=""
-    ENABLE_FONTS_SETUP=""
   fi
 
   # Interactive wizard loop
@@ -963,8 +930,6 @@ run_wizard() {
     _step_codex
     _step_new_init
     _step_editor
-    _step_ghostty
-    _step_fonts
     _step_hooks
     _step_plugins
     _step_commit
@@ -977,8 +942,6 @@ run_wizard() {
       COMMIT_ATTRIBUTION=""
       ENABLE_NEW_INIT=""
       ENABLE_CODEX_MCP=""
-      ENABLE_GHOSTTY_SETUP=""
-      ENABLE_FONTS_SETUP=""
       continue
     fi
     break

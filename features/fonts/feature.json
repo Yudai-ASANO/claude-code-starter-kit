@@ -1,9 +1,0 @@
-{
-  "name": "fonts",
-  "displayName": "Programming Fonts",
-  "description": "Install IBM Plex Mono and HackGen NF programming fonts for optimal terminal experience",
-  "category": "terminal",
-  "default": false,
-  "dependencies": [],
-  "conflicts": []
-}

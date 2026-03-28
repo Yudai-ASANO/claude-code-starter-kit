@@ -18,7 +18,6 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 declare -A _FEATURE_FLAGS=(
   [safety-net]=ENABLE_SAFETY_NET
-  [tmux-hooks]=ENABLE_TMUX_HOOKS
   [doc-blocker]=ENABLE_DOC_BLOCKER
   [prettier-hooks]=ENABLE_PRETTIER_HOOKS
   [console-log-guard]=ENABLE_CONSOLE_LOG_GUARD
@@ -47,7 +46,7 @@ declare -A _FEATURE_HAS_SCRIPTS=(
 # CRITICAL: safety-net MUST be first (PreToolUse runs in array order)
 # ---------------------------------------------------------------------------
 _FEATURE_ORDER=(
-  safety-net tmux-hooks doc-blocker prettier-hooks console-log-guard
+  safety-net doc-blocker prettier-hooks console-log-guard
   memory-persistence strategic-compact pr-creation-log pre-compact-commit
   auto-update statusline doc-size-guard
 )
@@ -56,6 +55,4 @@ _FEATURE_ORDER=(
 # Special-case features (not in _FEATURE_ORDER, handled individually):
 #   - git-push-review: EDITOR_CHOICE runtime substitution in build_settings_file()
 #   - codex-mcp: managed by lib/codex-setup.sh
-#   - ghostty: platform-specific, managed by lib/ghostty.sh
-#   - fonts: non-hook component, managed by lib/fonts.sh
 # ---------------------------------------------------------------------------

@@ -18,7 +18,6 @@ Not every saved value is supposed to appear in `settings.json`. In particular, `
 | Codex MCP | `ENABLE_CODEX_MCP` / `--codex-mcp` | Whether to run Codex CLI auth and Claude MCP registration | Codex MCP setup in `setup.sh` | No |
 | New `/init` | `ENABLE_NEW_INIT` / `--new-init` | Enable Claude Code's interactive `/init` flow | `settings.json` `env.CLAUDE_CODE_NEW_INIT` | Yes |
 | Editor | `EDITOR_CHOICE` / `--editor` | Editor command for the git push review hook | Hook template substitution, manifest | Indirectly |
-| Ghostty | `ENABLE_GHOSTTY_SETUP` / `--ghostty` | Extra Ghostty setup | Ghostty setup flow | No |
 | Hooks | `ENABLE_*` / `--hooks` | Which hooks are enabled | Hook fragments merged into `settings.json` | Yes |
 | Plugins | `SELECTED_PLUGINS` / `--plugins` | Recommended Claude Code plugins to install | Plugin install flow, manifest | No |
 | Claude Code attribution | `COMMIT_ATTRIBUTION` / `--commit-attribution` | Claude Code attribution in commits and PRs | `settings.json` `attribution` | Yes |
@@ -33,8 +32,6 @@ Not every saved value is supposed to appear in `settings.json`. In particular, `
 | `EDITOR_CHOICE` | Editor command for git push review | `features/git-push-review/hooks.json` | Use `none` if you do not want editor integration |
 | `COMMIT_ATTRIBUTION` | Claude Code attribution on or off | `settings.json` `attribution.commit`, `attribution.pr` | `false` clears both commit and PR attribution |
 | `ENABLE_CODEX_MCP` | Run Codex MCP setup or skip it | Codex CLI auth and `claude mcp add` | A setup action, not a JSON setting |
-| `ENABLE_GHOSTTY_SETUP` | Optional Ghostty setup | Ghostty install/config flow | Disabled automatically outside macOS |
-| `ENABLE_FONTS_SETUP` | Programming font installation | Font setup flow | Changes the environment, not generated JSON |
 | `SELECTED_PLUGINS` | Recommended plugin selection | Plugin install flow, manifest | Supports `name@marketplace` |
 
 ## Content Installation Flags
@@ -55,7 +52,6 @@ These flags are used to merge the corresponding `features/*/hooks.json` fragment
 |---|---|---|---|
 | `ENABLE_SAFETY_NET` | Safety Net | Block destructive commands | Yes |
 | `ENABLE_AUTO_UPDATE` | Auto Update | Check for starter kit updates on session start | Yes |
-| `ENABLE_TMUX_HOOKS` | Tmux Reminder | Encourage tmux for long-running work | Yes |
 | `ENABLE_GIT_PUSH_REVIEW` | Git Push Review | Pause before push and open a diff | Yes |
 | `ENABLE_DOC_BLOCKER` | Doc Blocker | Prevent unnecessary `.md` / `.txt` files | Yes |
 | `ENABLE_PRETTIER_HOOKS` | Prettier Auto-format | Format JS / TS edits | Yes |

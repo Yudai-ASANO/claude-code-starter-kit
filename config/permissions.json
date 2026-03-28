@@ -146,7 +146,6 @@
       "Bash(rustc:*)",
       "Bash(docker:*)",
       "Bash(docker-compose:*)",
-      "Bash(tmux:*)",
       "Bash(tar:*)",
       "Bash(unzip:*)",
       "Bash(zip:*)"

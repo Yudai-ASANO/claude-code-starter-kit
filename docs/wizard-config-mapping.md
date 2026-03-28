@@ -18,7 +18,6 @@
 | Codex MCP | `ENABLE_CODEX_MCP` / `--codex-mcp` | Codex CLI 認証と Claude MCP 登録を行うか | `setup.sh` の Codex MCP セットアップ | いいえ |
 | 新しい `/init` | `ENABLE_NEW_INIT` / `--new-init` | Claude Code の対話型 `/init` を有効にする | `settings.json` の `env.CLAUDE_CODE_NEW_INIT` | はい |
 | エディタ | `EDITOR_CHOICE` / `--editor` | git push review hook で使うエディタ差分表示コマンド | `hooks.json` の差し込み, manifest | 間接的 |
-| Ghostty | `ENABLE_GHOSTTY_SETUP` / `--ghostty` | Ghostty の追加セットアップ | Ghostty 設定処理 | いいえ |
 | フック | `ENABLE_*` / `--hooks` | 有効化するフックを選ぶ | `settings.json` の hooks 合成 | はい |
 | プラグイン | `SELECTED_PLUGINS` / `--plugins` | Claude Code セッション内で有効化する推奨プラグイン | プラグイン導入処理, manifest | いいえ |
 | Claude Code 帰属 | `COMMIT_ATTRIBUTION` / `--commit-attribution` | コミットと PR の Claude Code 帰属表示 | `settings.json` の `attribution` | はい |
@@ -33,8 +32,6 @@
 | `EDITOR_CHOICE` | git push review hook のエディタコマンド | `features/git-push-review/hooks.json` | エディタを使わない場合は `none` |
 | `COMMIT_ATTRIBUTION` | Claude Code 帰属の表示有無 | `settings.json` の `attribution.commit`, `attribution.pr` | `false` で commit / PR 両方の帰属表示を空文字にする |
 | `ENABLE_CODEX_MCP` | Codex MCP セットアップ実行可否 | Codex CLI 認証と `claude mcp add` | 反映は `settings.json` ではなく外部セットアップ |
-| `ENABLE_GHOSTTY_SETUP` | Ghostty の追加セットアップ | macOS 向け Ghostty 設定 | macOS 以外では無効化される |
-| `ENABLE_FONTS_SETUP` | プログラミング用フォント導入 | フォントインストール処理 | 生成設定ではなく環境変更 |
 | `SELECTED_PLUGINS` | 推奨プラグインの選択 | プラグイン導入処理, manifest | `name@marketplace` 形式に対応 |
 
 ## コンテンツ配置フラグ
@@ -55,7 +52,6 @@
 |---|---|---|---|
 | `ENABLE_SAFETY_NET` | Safety Net | 危険なコマンドの遮断 | はい |
 | `ENABLE_AUTO_UPDATE` | Auto Update | セッション開始時の更新確認 | はい |
-| `ENABLE_TMUX_HOOKS` | Tmux Reminder | 長時間処理を tmux に誘導 | はい |
 | `ENABLE_GIT_PUSH_REVIEW` | Git Push Review | push 前に差分確認 | はい |
 | `ENABLE_DOC_BLOCKER` | Doc Blocker | 不要な `.md` / `.txt` 作成を抑制 | はい |
 | `ENABLE_PRETTIER_HOOKS` | Prettier Auto-format | JS / TS 編集後の整形 | はい |

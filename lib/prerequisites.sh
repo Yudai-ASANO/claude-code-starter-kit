@@ -77,8 +77,8 @@ _ensure_homebrew() {
     fi
   fi
 
-  warn "Homebrew のインストールに失敗しました — フォントの自動インストールが制限されます"
-  return 0  # Not fatal — fonts will fall back to manual download hints
+  warn "Homebrew のインストールに失敗しました"
+  return 0  # Not fatal
 }
 
 # ---------------------------------------------------------------------------
@@ -277,26 +277,6 @@ _awk() {
   else
     awk "$@"
   fi
-}
-
-check_tmux() {
-  if command -v tmux &>/dev/null; then
-    ok "tmux $(tmux -V 2>/dev/null | awk '{print $2}')"
-    return 0
-  fi
-  warn "tmux not found (optional). Install with: $(_tmux_install_hint)"
-  return 0 # Optional - do not fail
-}
-
-_tmux_install_hint() {
-  case "$DISTRO_FAMILY" in
-    macos)  echo "brew install tmux" ;;
-    debian) echo "sudo apt-get install tmux" ;;
-    rhel)   echo "sudo dnf install tmux" ;;
-    alpine) echo "sudo apk add tmux" ;;
-    msys)   echo "tmux is not available in Git Bash" ;;
-    *)      echo "see https://github.com/tmux/tmux/wiki/Installing" ;;
-  esac
 }
 
 check_node() {
@@ -653,7 +633,6 @@ check_prerequisites() {
   check_gnu_sed || failed=1
   check_gnu_awk || failed=1
   check_node  # Optional: needed for Codex CLI / npm plugins only
-  check_tmux
   check_dos2unix
   check_gh
 

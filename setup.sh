@@ -99,10 +99,6 @@ check_bash4 || {
 . "$PROJECT_DIR/lib/dryrun.sh"
 # shellcheck source=/dev/null
 . "$PROJECT_DIR/lib/deploy.sh"
-# shellcheck source=/dev/null
-. "$PROJECT_DIR/lib/ghostty.sh"
-# shellcheck source=/dev/null
-. "$PROJECT_DIR/lib/fonts.sh"
 
 # ---------------------------------------------------------------------------
 # Wizard
@@ -272,12 +268,6 @@ if [[ "${DRY_RUN:-false}" == "true" ]]; then
   _dryrun_collect_file_changes "$_ORIG_CLAUDE_DIR"
 
   # Log external operations that would happen
-  if [[ "$(uname -s)" == "Darwin" ]] && is_true "${ENABLE_GHOSTTY_SETUP:-false}"; then
-    _dryrun_log "EXTERNAL" "Ghostty" "brew install --cask ghostty"
-  fi
-  if is_true "${ENABLE_FONTS_SETUP:-false}"; then
-    _dryrun_log "EXTERNAL" "Fonts" "IBM Plex Mono + HackGen NF"
-  fi
   # Match the real install logic: WSL always installs local Linux binary
   _dr_need_cli=false
   if [[ -x "$HOME/.local/bin/claude" ]]; then
@@ -318,26 +308,6 @@ if [[ "${DRY_RUN:-false}" == "true" ]]; then
 
   _dryrun_show_results "$_ORIG_CLAUDE_DIR"
   exit 0
-fi
-
-# ---------------------------------------------------------------------------
-# Ghostty terminal setup (macOS only)
-# ---------------------------------------------------------------------------
-if [[ "$(uname -s)" != "Darwin" ]]; then
-  ENABLE_GHOSTTY_SETUP="false"
-fi
-
-if is_true "${ENABLE_GHOSTTY_SETUP:-false}"; then
-  section "Setting up Ghostty terminal"
-  setup_ghostty "$PROJECT_DIR/features/ghostty/config.template"
-fi
-
-# ---------------------------------------------------------------------------
-# Programming font installation (cross-platform)
-# ---------------------------------------------------------------------------
-if is_true "${ENABLE_FONTS_SETUP:-false}"; then
-  section "$STR_FONTS_SECTION_TITLE"
-  setup_fonts
 fi
 
 write_manifest
@@ -514,83 +484,40 @@ fi
 # Final message
 # ---------------------------------------------------------------------------
 printf "\n"
-# Ghostty incomplete message is only relevant on macOS
-if [[ "${#GHOSTTY_INCOMPLETE[@]}" -gt 0 ]] && [[ "$(uname -s)" == "Darwin" ]]; then
-  section "$STR_FINAL_INCOMPLETE_TITLE"
-  warn "$STR_FINAL_INCOMPLETE_GHOSTTY"
-  for _item in "${GHOSTTY_INCOMPLETE[@]}"; do
-    warn "  - $_item"
-  done
-  printf "\n"
-  info "$STR_FINAL_INCOMPLETE_HINT"
-  info "  $STR_FINAL_INCOMPLETE_BREW"
-  info "    /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
-  info ""
-  info "  $STR_FINAL_INCOMPLETE_RERUN"
-  info "    ~/.claude-starter-kit/setup.sh"
-  printf "\n"
+section "$STR_FINAL_TITLE"
+# Detect platform for final message (inline — don't rely on is_wsl/is_msys)
+_uname_final="$(uname -s)"
+_is_wsl_final=false
+if [[ -f /proc/version ]] && grep -qi "microsoft" /proc/version 2>/dev/null; then
+  _is_wsl_final=true
+elif [[ -n "${WSL_DISTRO_NAME:-}" ]] || [[ -n "${WSLENV:-}" ]]; then
+  _is_wsl_final=true
+fi
+_is_msys_final=false
+case "$_uname_final" in
+  MSYS_NT*|MINGW*_NT*|CLANG*_NT*|UCRT*_NT*) _is_msys_final=true ;;
+esac
+
+if [[ "$_is_wsl_final" == "true" ]]; then
+  info "$STR_FINAL_WSL_NEXT"
+  info "  $STR_FINAL_WSL_STEP1"
+  info "  $STR_FINAL_WSL_STEP2"
+  info "  $STR_FINAL_WSL_STEP3"
+elif [[ "$_is_msys_final" == "true" ]]; then
+  info "$STR_FINAL_MSYS_NEXT"
+  info "  $STR_FINAL_MSYS_STEP1"
+  info "  ${STR_FINAL_MSYS_STEP1_HINT:-}"
+  info "  $STR_FINAL_MSYS_STEP2"
+  info "  $STR_FINAL_MSYS_STEP3"
+else
   info "$STR_FINAL_NEXT"
   info "  $STR_FINAL_STEP1"
   info "  $STR_FINAL_STEP2"
   info "  $STR_FINAL_STEP3"
-else
-  section "$STR_FINAL_TITLE"
-  _ghostty_found=false
-  if [[ "$(uname -s)" == "Darwin" ]]; then
-    if [[ -x "/Applications/Ghostty.app/Contents/MacOS/ghostty" ]]; then
-      _ghostty_found=true
-    fi
-  fi
-  # Detect platform for final message (inline — don't rely on is_wsl/is_msys)
-  _uname_final="$(uname -s)"
-  _is_wsl_final=false
-  if [[ -f /proc/version ]] && grep -qi "microsoft" /proc/version 2>/dev/null; then
-    _is_wsl_final=true
-  elif [[ -n "${WSL_DISTRO_NAME:-}" ]] || [[ -n "${WSLENV:-}" ]]; then
-    _is_wsl_final=true
-  fi
-  _is_msys_final=false
-  case "$_uname_final" in
-    MSYS_NT*|MINGW*_NT*|CLANG*_NT*|UCRT*_NT*) _is_msys_final=true ;;
-  esac
-
-  if [[ "$_ghostty_found" == "true" ]]; then
-    # Ghostty is installed - guide user to launch it
-    info "$STR_FINAL_GHOSTTY_NEXT"
-    info "  $STR_FINAL_GHOSTTY_STEP1"
-    info "  $STR_FINAL_GHOSTTY_STEP2"
-    info "  $STR_FINAL_GHOSTTY_STEP3"
-    printf "\n"
-    ok "$STR_FINAL_GHOSTTY_FONT"
-  elif [[ "$_is_wsl_final" == "true" ]]; then
-    info "$STR_FINAL_WSL_NEXT"
-    info "  $STR_FINAL_WSL_STEP1"
-    info "  $STR_FINAL_WSL_STEP2"
-    info "  $STR_FINAL_WSL_STEP3"
-  elif [[ "$_is_msys_final" == "true" ]]; then
-    info "$STR_FINAL_MSYS_NEXT"
-    info "  $STR_FINAL_MSYS_STEP1"
-    info "  ${STR_FINAL_MSYS_STEP1_HINT:-}"
-    info "  $STR_FINAL_MSYS_STEP2"
-    info "  $STR_FINAL_MSYS_STEP3"
-  else
-    info "$STR_FINAL_NEXT"
-    info "  $STR_FINAL_STEP1"
-    info "  $STR_FINAL_STEP2"
-    info "  $STR_FINAL_STEP3"
-  fi
-  # Font incomplete warning
-  if [[ "${#FONTS_INCOMPLETE[@]}" -gt 0 ]]; then
-    printf "\n"
-    warn "$STR_FINAL_INCOMPLETE_FONTS"
-    for _item in "${FONTS_INCOMPLETE[@]}"; do
-      warn "  - $_item"
-    done
-  fi
-  printf "\n"
-  warn "${STR_FINAL_RESTART_WARN:-Important: Restart your terminal for settings to take effect.}"
-  info "${STR_FINAL_RESTART_HINT:-Close this terminal and open a new one before running claude.}"
-  printf "\n"
-  ok "$STR_FINAL_ENJOY"
 fi
+printf "\n"
+warn "${STR_FINAL_RESTART_WARN:-Important: Restart your terminal for settings to take effect.}"
+info "${STR_FINAL_RESTART_HINT:-Close this terminal and open a new one before running claude.}"
+printf "\n"
+ok "$STR_FINAL_ENJOY"
 printf "\n"
