@@ -601,15 +601,17 @@ run_update() {
   if [[ "$_migrated_hooks" == "true" ]] && [[ -f "$current_settings" ]]; then
     local _cleaned
     _cleaned="$(jq '
+      # Kit-generated hooks all start with this exact boilerplate
+      def is_kit_hook: .hooks[]?.command | startswith("#!/bin/bash\ninput=$(cat)");
+
       if .hooks.PostToolUse then
         .hooks.PostToolUse |= map(
           select(
-            ((.matcher | test("ts\\|tsx\\|js\\|jsx")) and
-             (.hooks[]?.command | test("prettier --write"))) | not
+            (is_kit_hook and (.hooks[]?.command | test("prettier --write"))) | not
           )
           | select(
-            ((.matcher | test("ts\\|tsx\\|js\\|jsx")) and
-             (.hooks[]?.command | test("console\\\\.log"))) | not
+            (is_kit_hook and (.hooks[]?.command | test("console\\\\.log")) and
+             (.hooks[]?.command | test("grep -n"))) | not
           )
         )
       else . end
@@ -617,9 +619,9 @@ run_update() {
       if .hooks.Stop then
         .hooks.Stop |= map(
           select(
-            ((.matcher == "*") and
-             (.hooks[]?.command | test("console\\\\.log")) and
-             (.hooks[]?.command | test("git diff --name-only"))) | not
+            (is_kit_hook and (.hooks[]?.command | test("console\\\\.log")) and
+             (.hooks[]?.command | test("git diff --name-only")) and
+             (.hooks[]?.command | test("modified_files"))) | not
           )
         )
       else . end
