@@ -1,0 +1,9 @@
+{
+  "name": "post-test-analysis",
+  "displayName": "Post-Test Failure Analysis",
+  "description": "Analyzes test failures and outputs summary (opt-in, failure-only)",
+  "category": "harness",
+  "default": false,
+  "dependencies": [],
+  "conflicts": []
+}

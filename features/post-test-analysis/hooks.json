@@ -1,0 +1,12 @@
+{
+  "hooks": {
+    "PostToolUse": [{
+      "matcher": "tool == 'Bash' && tool_output.exit_code != null && tool_output.exit_code != 0",
+      "hooks": [{
+        "type": "command",
+        "command": "__HOME__/.claude/hooks/post-test-analysis/analyze-test.sh",
+        "timeout": 5000
+      }]
+    }]
+  }
+}
