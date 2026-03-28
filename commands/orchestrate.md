@@ -118,23 +118,33 @@ Executes:
 
 1. **Planner Agent**
    - Analyzes requirements
-   - Creates implementation plan
+   - Creates implementation plan + Sprint Contract
    - Identifies dependencies
    - Output: `HANDOFF: planner -> tdd-guide`
 
-2. **TDD Guide Agent**
-   - Reads planner handoff
+2. **TDD Guide Agent** (Generator)
+   - Reads planner handoff + Sprint Contract
    - Writes tests first
    - Implements to pass tests
-   - Output: `HANDOFF: tdd-guide -> code-reviewer`
+   - Output: implementation (orchestrator collects evidence next)
 
-3. **Code Reviewer Agent**
-   - Reviews implementation
-   - Checks for issues
-   - Suggests improvements
-   - Output: `HANDOFF: code-reviewer -> security-reviewer`
+3. **Evidence Collection** (orchestrator)
+   - Runs each verifier command from the Sprint Contract
+   - Records exit codes and stdout
+   - Output: Evidence bundle passed to qa-reviewer
 
-4. **Security Reviewer Agent**
+4. **QA Reviewer Agent**
+   - Grades implementation against Sprint Contract + evidence
+   - Issues PASS or FAIL with repair instructions
+   - On FAIL: triggers repair loop (max 3 iterations)
+   - Output: `HANDOFF: qa-reviewer -> code-reviewer + security-reviewer`
+
+5. **Code Reviewer Agent** (after QA pass, parallel)
+   - Reviews implementation quality
+   - Checks for issues and suggests improvements
+   - Output: code review findings
+
+6. **Security Reviewer Agent** (parallel with code reviewer)
    - Security audit
    - Vulnerability check
    - Final approval
@@ -147,7 +157,7 @@ ORCHESTRATION REPORT
 ====================
 Workflow: feature
 Task: Add user authentication
-Agents: planner -> tdd-guide -> code-reviewer -> security-reviewer
+Agents: planner -> tdd-guide -> qa-reviewer -> code-reviewer + security-reviewer
 
 SUMMARY
 -------
@@ -157,6 +167,7 @@ AGENT OUTPUTS
 -------------
 Planner: [summary]
 TDD Guide: [summary]
+QA Reviewer: [grading report summary]
 Code Reviewer: [summary]
 Security Reviewer: [summary]
 
