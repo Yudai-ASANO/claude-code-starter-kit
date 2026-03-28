@@ -908,6 +908,11 @@ git commit -m "refactor: remove prettier-hooks and console-log-guard (moved to /
 - Modify: `i18n/en/strings.sh`
 - Modify: `i18n/ja/strings.sh`
 
+**Design rationale:**
+- `_restore_config_from_manifest()` は `wizard/wizard.sh` に定義されており `lib/update.sh` にはない
+- ENABLE_PRETTIER_HOOKS / ENABLE_CONSOLE_LOG_GUARD はこのプランで削除されるため、それらのフラグに依存する検出は信頼できない
+- **正しいアプローチ**: 現在デプロイ済みの `~/.claude/settings.json` を直接読み、prettier/console-log-guard のフックエントリが存在するかを jq で検出する
+
 - [ ] **Step 1: i18n/en/strings.sh に移行メッセージを追加**
 
 ```bash
@@ -920,34 +925,47 @@ STR_MIGRATION_HOOKS_TO_PROJECT="prettier-hooks and console-log-guard have moved 
 STR_MIGRATION_HOOKS_TO_PROJECT="prettier-hooks と console-log-guard はプロジェクトレベルの設定に移行しました。\n   プロジェクトで /init-harness を実行して同等のフックを設定してください。"
 ```
 
-- [ ] **Step 3: lib/update.sh に移行検出ロジックを追加**
+- [ ] **Step 3: lib/update.sh の run_update() 関数内に移行検出ロジックを追加**
 
-`run_update()` 関数内（設定復元後、ファイル更新前）に以下を追加:
+挿入場所: `run_update()` 内の `# --- Phase 1: settings.json ---` コメントの直前（行 521 付近）。
+この時点で `current_settings` 変数はまだ定義されていないので、直接パスを使う。
 
 ```bash
-# --- Migration: prettier-hooks / console-log-guard → project-level ---
-_migrated_hooks=false
-if [[ "${ENABLE_PRETTIER_HOOKS:-}" == "true" ]] || [[ "${ENABLE_CONSOLE_LOG_GUARD:-}" == "true" ]]; then
-  _migrated_hooks=true
-  # Clear the flags so they don't persist
-  ENABLE_PRETTIER_HOOKS="false"
-  ENABLE_CONSOLE_LOG_GUARD="false"
-fi
-
-# Show migration message after update completes
-if [[ "$_migrated_hooks" == "true" ]]; then
-  printf '\n%s\n\n' "${STR_MIGRATION_HOOKS_TO_PROJECT:-prettier-hooks and console-log-guard have moved to project-level. Run /init-harness in your project.}"
-fi
+  # --- Migration: prettier-hooks / console-log-guard → project-level ---
+  # Detect by inspecting the CURRENT deployed settings.json for hook entries
+  # that reference prettier or console.log patterns. This does not depend on
+  # ENABLE_* flags (which are being removed from the wizard in this release).
+  local _current_settings_for_migration="${claude_dir}/settings.json"
+  local _migrated_hooks=false
+  if [[ -f "$_current_settings_for_migration" ]]; then
+    if jq -e '
+      .hooks.PostToolUse[]? |
+      select(.hooks[]?.command | test("prettier|console\\.log"))
+    ' "$_current_settings_for_migration" >/dev/null 2>&1; then
+      _migrated_hooks=true
+    fi
+  fi
 ```
 
-The exact insertion point is inside `run_update()`, after `_restore_config_from_manifest()` is called and before the settings.json rebuild. This ensures the old flags are read from the manifest, then cleared before the new settings.json is built (which no longer contains those features).
+- [ ] **Step 4: run_update() 関数の末尾（全フェーズ完了後、return 直前）に移行メッセージ表示を追加**
 
-- [ ] **Step 4: ShellCheck 検証**
+```bash
+  # Show migration message if old hooks were detected
+  if [[ "$_migrated_hooks" == "true" ]]; then
+    warn "${STR_MIGRATION_HOOKS_TO_PROJECT:-prettier-hooks and console-log-guard have moved to project-level. Run /init-harness in your project.}"
+  fi
+```
+
+Note: `warn` は `lib/colors.sh` で定義されている既存のヘルパー関数。
+新しい settings.json は build_settings_file() で生成されるが、そこには prettier-hooks / console-log-guard は
+もう含まれない（features が削除されているため）。よって update 後の settings.json からは自動的に除去される。
+
+- [ ] **Step 5: ShellCheck 検証**
 
 Run: `shellcheck -S warning lib/update.sh`
 Expected: エラーなし
 
-- [ ] **Step 5: コミット**
+- [ ] **Step 6: コミット**
 
 ```bash
 git add lib/update.sh i18n/en/strings.sh i18n/ja/strings.sh
