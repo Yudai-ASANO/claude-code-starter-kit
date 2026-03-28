@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "(tool == 'Write' || tool == 'Edit') && tool_input.file_path != null && tool_input.file_path matches '\\.(ts|tsx|js|jsx|py|sh|go|rs|java|rb)$'",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "__HOME__/.claude/hooks/check-codex-before-write/check-codex-before-write.sh",
+            "timeout": 5000
+          }
+        ]
+      }
+    ]
+  }
+}

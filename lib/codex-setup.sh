@@ -1,16 +1,16 @@
 #!/bin/bash
-# lib/codex-setup.sh - Codex MCP setup (CLI install, auth, MCP registration)
+# lib/codex-setup.sh - Codex CLI setup (CLI install + auth)
 # Requires: lib/colors.sh, lib/detect.sh, lib/prerequisites.sh (_get_shell_rc_file),
 #           wizard/wizard.sh (is_true)
-# Uses globals: ENABLE_CODEX_MCP, WIZARD_NONINTERACTIVE, _SETUP_TMP_FILES[],
+# Uses globals: ENABLE_CODEX_CLI, WIZARD_NONINTERACTIVE, _SETUP_TMP_FILES[],
 #               STR_CODEX_*, STR_CHOICE
-# Exports: run_codex_setup(), _setup_codex_mcp(), _install_codex_cli(),
+# Exports: run_codex_setup(), _setup_codex_cli(), _install_codex_cli(),
 #          _run_with_timeout(), _verify_openai_key(), _save_openai_key()
 # Dry-run: guarded externally (setup.sh logs EXTERNAL, does not call run_codex_setup)
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# Codex MCP helpers
+# Codex CLI helpers
 # ---------------------------------------------------------------------------
 
 # Portable timeout wrapper (macOS lacks `timeout` from coreutils)
@@ -299,9 +299,9 @@ _prompt_openai_key() {
 }
 
 # ---------------------------------------------------------------------------
-# Codex MCP interactive setup
+# Codex CLI interactive setup
 # ---------------------------------------------------------------------------
-_setup_codex_mcp() {
+_setup_codex_cli() {
   printf "\n"
   section "$STR_CODEX_SETUP_TITLE"
 
@@ -314,14 +314,10 @@ _setup_codex_mcp() {
     done
   fi
 
-  # Fast path: if everything is already configured, skip all slow checks
-  if command -v codex &>/dev/null \
-    && _codex_login_status >/dev/null \
-    && command -v claude &>/dev/null \
-    && claude mcp list -s user 2>/dev/null | grep -q "codex" 2>/dev/null; then
+  # Fast path: if Codex CLI is installed and authenticated, skip
+  if command -v codex &>/dev/null && _codex_login_status >/dev/null; then
     ok "$STR_CODEX_CLI_ALREADY"
     ok "$STR_CODEX_LOGIN_ALREADY"
-    ok "$STR_CODEX_MCP_ALREADY"
     return
   fi
 
@@ -338,7 +334,6 @@ _setup_codex_mcp() {
   local _rc_file
   _rc_file="$(_get_shell_rc_file)"
   local _auth_ready=false
-  local _mcp_ready=false
 
   # Step 2: Verify Codex CLI authentication
   printf "\n"
@@ -356,30 +351,9 @@ _setup_codex_mcp() {
     fi
   fi
 
-  # Step 3: Register MCP server with Claude Code
-  # Note: codex login handles authentication; no need to embed API key in MCP config
-  if command -v claude &>/dev/null && command -v codex &>/dev/null; then
-    printf "\n"
-    local _mcp_list
-    _mcp_list="$(claude mcp list -s user 2>/dev/null || true)"
-    if echo "$_mcp_list" | grep -q "codex" 2>/dev/null; then
-      ok "$STR_CODEX_MCP_ALREADY"
-      _mcp_ready=true
-    else
-      info "$STR_CODEX_MCP_REGISTERING"
-      if claude mcp add -s user codex -- codex mcp-server 2>/dev/null; then
-        ok "$STR_CODEX_MCP_REGISTERED"
-        _mcp_ready=true
-      else
-        warn "$STR_CODEX_MCP_REG_FAILED"
-        info "  claude mcp add -s user codex -- codex mcp-server"
-      fi
-    fi
-  fi
-
   printf "\n"
   info "$STR_CODEX_RESTART_HINT"
-  if [[ "$_auth_ready" == "true" ]] && [[ "$_mcp_ready" == "true" ]]; then
+  if [[ "$_auth_ready" == "true" ]]; then
     ok "$STR_CODEX_SETUP_DONE"
   else
     warn "$STR_CODEX_SETUP_INCOMPLETE"
@@ -390,31 +364,29 @@ _setup_codex_mcp() {
 # run_codex_setup - Entry point called from setup.sh
 # ---------------------------------------------------------------------------
 run_codex_setup() {
-  is_true "${ENABLE_CODEX_MCP:-false}" || return 0
+  is_true "${ENABLE_CODEX_CLI:-false}" || return 0
 
-  # Skip if already fully configured (codex CLI + login + MCP registered)
+  # Skip if already fully configured (codex CLI installed + authenticated)
   local _codex_already_done=false
   if command -v codex &>/dev/null \
-    && _codex_login_status >/dev/null 2>&1 \
-    && command -v claude &>/dev/null \
-    && claude mcp list -s user 2>/dev/null | grep -q "codex" 2>/dev/null; then
+    && _codex_login_status >/dev/null 2>&1; then
     _codex_already_done=true
   fi
 
   if [[ "$_codex_already_done" == "true" ]]; then
-    ok "${STR_CODEX_MCP_ALREADY:-Codex MCP already configured}"
+    ok "${STR_CODEX_CLI_ALREADY:-Codex CLI already installed}"
   elif [[ "${WIZARD_NONINTERACTIVE:-false}" == "true" ]]; then
-    info "${STR_CODEX_SETUP_SKIPPED:-Codex MCP setup skipped (non-interactive)}"
+    info "${STR_CODEX_SETUP_SKIPPED:-Codex CLI setup skipped (non-interactive)}"
   else
     printf "\n"
-    info "${STR_CODEX_SETUP_CONFIRM:-Start Codex MCP setup?}"
+    info "${STR_CODEX_SETUP_CONFIRM:-Start Codex CLI setup?}"
     printf "  1) %s\n" "${STR_CODEX_SETUP_CONFIRM_YES:-Yes}"
     printf "  2) %s\n" "${STR_CODEX_SETUP_CONFIRM_NO:-No, skip}"
     local _codex_confirm=""
     read -r -p "${STR_CHOICE:-Choice}: " _codex_confirm
     case "$_codex_confirm" in
-      1) _setup_codex_mcp ;;
-      *) info "${STR_CODEX_SETUP_SKIPPED:-Codex MCP setup skipped}" ;;
+      1) _setup_codex_cli ;;
+      *) info "${STR_CODEX_SETUP_SKIPPED:-Codex CLI setup skipped}" ;;
     esac
   fi
 }

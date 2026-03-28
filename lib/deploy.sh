@@ -339,9 +339,9 @@ build_claude_md() {
 
   cp -a "$base" "$out"
 
-  if is_true "$ENABLE_CODEX_MCP"; then
-    local partial="$PROJECT_DIR/features/codex-mcp/CLAUDE.md.partial.${lang}"
-    inject_feature "$out" "codex-mcp" "$partial"
+  if is_true "$ENABLE_CODEX_CLI"; then
+    local partial="$PROJECT_DIR/features/codex-cli/CLAUDE.md.partial.${lang}"
+    inject_feature "$out" "codex-cli" "$partial"
   fi
 
   remove_unresolved "$out"
@@ -355,9 +355,9 @@ build_claude_md_to_file() {
 
   cp -a "$base" "$out"
 
-  if is_true "$ENABLE_CODEX_MCP"; then
-    local partial="$PROJECT_DIR/features/codex-mcp/CLAUDE.md.partial.${lang}"
-    inject_feature "$out" "codex-mcp" "$partial"
+  if is_true "$ENABLE_CODEX_CLI"; then
+    local partial="$PROJECT_DIR/features/codex-cli/CLAUDE.md.partial.${lang}"
+    inject_feature "$out" "codex-cli" "$partial"
   fi
 
   remove_unresolved "$out"
@@ -420,6 +420,12 @@ build_settings_file() {
       hook_fragments+=("$tmp")
       tmp_files+=("$tmp")
     fi
+  fi
+
+  # Special case: codex-cli (permissions fragment only, no hook types)
+  if is_true "${ENABLE_CODEX_CLI:-false}"; then
+    local codex_hooks="$PROJECT_DIR/features/codex-cli/hooks.json"
+    [[ -f "$codex_hooks" ]] && hook_fragments+=("$codex_hooks")
   fi
 
   build_settings_json "$base" "$permissions" "$out" ${hook_fragments[@]+"${hook_fragments[@]}"}

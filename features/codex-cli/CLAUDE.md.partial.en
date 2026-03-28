@@ -1,0 +1,75 @@
+## Codex CLI Sub-Agent Operation
+
+> The following rules apply only when OpenAI Codex CLI is installed and authenticated.
+> Simple tasks (single-file/few-line changes, config edits, doc updates) can be handled directly by Claude.
+
+## Architecture
+
+```
+User → Claude Code (Commander: Design & Integration)
+  ↓
+  Bash(codex exec ...) → Codex CLI (Executor: Implementation & Review)
+  ↓
+  Claude Code (Verification & Integration & Commit)
+```
+
+## Command Patterns
+
+Use `codex exec` with appropriate profiles:
+
+| Purpose | Command |
+|---------|---------|
+| Read-only analysis | `codex exec --full-auto --sandbox read-only "<prompt>"` |
+| Code review | `codex exec --full-auto -p review "<prompt>"` |
+| Debug / Root-cause | `codex exec --full-auto -p debug "<prompt>"` |
+| Implementation | `codex exec --full-auto -p implement "<prompt>"` |
+| With filesystem access | `codex exec --full-auto "<prompt>"` |
+
+## Delegation Criteria
+
+### Delegate to Codex when:
+- New code generation expected to be 20+ lines
+- Changes spanning multiple files
+- Code review (Codex is more thorough)
+- Complex refactoring or architecture decisions
+- Root cause analysis of bugs
+- Security vulnerability scanning
+
+### Claude handles directly:
+- Single-file, few-line changes
+- Config file edits (YAML, JSON, TOML, etc.)
+- Documentation / README updates
+- Git operations (commit, branch, merge)
+- User communication / Q&A
+
+## Delegation Rules
+
+### 1. Make prompts self-contained
+
+Each Codex call is stateless (no memory of previous calls).
+Include all necessary information in every prompt:
+
+```
+CONTEXT: Relevant background and file contents
+TASK: Specific action to perform
+CONSTRAINTS: Rules, patterns, and conventions to follow
+OUTPUT FORMAT: Output format (code only, diff format, with explanation, etc.)
+```
+
+### 2. Delegate reviews to Codex
+
+Delegate code reviews to Codex. Claude makes the final judgment based on the review results.
+
+### 3. Retry on errors
+
+Include the original task + error details when retrying.
+
+### 4. Never pass through raw output
+
+Never show Codex output directly to the user. Always verify, integrate, and report.
+
+## Security Notes
+
+- Never include API keys or secrets in Codex prompts
+- Always perform security reviews on Codex-generated code
+- Use `--sandbox read-only` for analysis tasks that don't need file writes

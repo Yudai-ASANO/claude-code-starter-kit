@@ -1,0 +1,9 @@
+{
+  "name": "codex-cli",
+  "displayName": "Codex CLI Integration",
+  "description": "Delegate tasks to OpenAI Codex CLI as a sub-agent",
+  "category": "integration",
+  "default": false,
+  "dependencies": [],
+  "conflicts": []
+}

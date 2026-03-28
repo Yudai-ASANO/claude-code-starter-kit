@@ -28,8 +28,12 @@ INSTALL_COMMANDS="${INSTALL_COMMANDS:-}"
 INSTALL_SKILLS="${INSTALL_SKILLS:-}"
 INSTALL_MEMORY="${INSTALL_MEMORY:-}"
 
+ENABLE_CODEX_CLI="${ENABLE_CODEX_CLI:-}"
 ENABLE_CODEX_MCP="${ENABLE_CODEX_MCP:-}"
 ENABLE_GIT_PUSH_REVIEW="${ENABLE_GIT_PUSH_REVIEW:-}"
+ENABLE_CHECK_CODEX_AFTER_PLAN="${ENABLE_CHECK_CODEX_AFTER_PLAN:-}"
+ENABLE_CHECK_CODEX_BEFORE_WRITE="${ENABLE_CHECK_CODEX_BEFORE_WRITE:-}"
+ENABLE_ERROR_TO_CODEX="${ENABLE_ERROR_TO_CODEX:-}"
 ENABLE_DOC_BLOCKER="${ENABLE_DOC_BLOCKER:-}"
 ENABLE_PRETTIER_HOOKS="${ENABLE_PRETTIER_HOOKS:-}"
 ENABLE_CONSOLE_LOG_GUARD="${ENABLE_CONSOLE_LOG_GUARD:-}"
@@ -129,7 +133,7 @@ _language_label() {
 # ---------------------------------------------------------------------------
 
 # Allowed config variable names (used by _safe_source_config for allowlist validation)
-_CONFIG_ALLOWED_KEYS="LANGUAGE EDITOR_CHOICE COMMIT_ATTRIBUTION ENABLE_NEW_INIT INSTALL_AGENTS INSTALL_RULES INSTALL_COMMANDS INSTALL_SKILLS INSTALL_MEMORY ENABLE_CODEX_MCP ENABLE_GIT_PUSH_REVIEW ENABLE_DOC_BLOCKER ENABLE_PRETTIER_HOOKS ENABLE_CONSOLE_LOG_GUARD ENABLE_MEMORY_PERSISTENCE ENABLE_STRATEGIC_COMPACT ENABLE_PR_CREATION_LOG ENABLE_PRE_COMPACT_COMMIT ENABLE_SAFETY_NET ENABLE_AUTO_UPDATE ENABLE_STATUSLINE ENABLE_DOC_SIZE_GUARD SELECTED_PLUGINS"
+_CONFIG_ALLOWED_KEYS="LANGUAGE EDITOR_CHOICE COMMIT_ATTRIBUTION ENABLE_NEW_INIT INSTALL_AGENTS INSTALL_RULES INSTALL_COMMANDS INSTALL_SKILLS INSTALL_MEMORY ENABLE_CODEX_CLI ENABLE_CODEX_MCP ENABLE_GIT_PUSH_REVIEW ENABLE_DOC_BLOCKER ENABLE_PRETTIER_HOOKS ENABLE_CONSOLE_LOG_GUARD ENABLE_MEMORY_PERSISTENCE ENABLE_STRATEGIC_COMPACT ENABLE_PR_CREATION_LOG ENABLE_PRE_COMPACT_COMMIT ENABLE_SAFETY_NET ENABLE_AUTO_UPDATE ENABLE_STATUSLINE ENABLE_DOC_SIZE_GUARD ENABLE_CHECK_CODEX_AFTER_PLAN ENABLE_CHECK_CODEX_BEFORE_WRITE ENABLE_ERROR_TO_CODEX SELECTED_PLUGINS"
 
 # Safe key=value parser: reads a config file line-by-line and only sets
 # variables whose names appear in the allowlist. This replaces the previous
@@ -165,6 +169,10 @@ load_config() {
   if [[ -f "$file" ]]; then
     _safe_source_config "$file"
   fi
+  # Backward compat: map old ENABLE_CODEX_MCP to ENABLE_CODEX_CLI
+  if [[ -n "${ENABLE_CODEX_MCP:-}" ]] && [[ -z "${ENABLE_CODEX_CLI:-}" ]]; then
+    ENABLE_CODEX_CLI="$ENABLE_CODEX_MCP"
+  fi
 }
 
 fill_missing_profile_defaults() {
@@ -187,10 +195,11 @@ _CONFIG_SAVE_KEYS=(
   ""
   INSTALL_AGENTS INSTALL_RULES INSTALL_COMMANDS INSTALL_SKILLS INSTALL_MEMORY
   ""
-  ENABLE_CODEX_MCP ENABLE_GIT_PUSH_REVIEW ENABLE_DOC_BLOCKER
+  ENABLE_CODEX_CLI ENABLE_GIT_PUSH_REVIEW ENABLE_DOC_BLOCKER
   ENABLE_PRETTIER_HOOKS ENABLE_CONSOLE_LOG_GUARD ENABLE_MEMORY_PERSISTENCE
   ENABLE_STRATEGIC_COMPACT ENABLE_PR_CREATION_LOG ENABLE_PRE_COMPACT_COMMIT
   ENABLE_SAFETY_NET ENABLE_AUTO_UPDATE ENABLE_STATUSLINE ENABLE_DOC_SIZE_GUARD
+  ENABLE_CHECK_CODEX_AFTER_PLAN ENABLE_CHECK_CODEX_BEFORE_WRITE ENABLE_ERROR_TO_CODEX
   ""
   SELECTED_PLUGINS
 )
@@ -437,6 +446,9 @@ HOOK_KEYS=(
   "ENABLE_PR_CREATION_LOG"
   "ENABLE_PRE_COMPACT_COMMIT"
   "ENABLE_DOC_SIZE_GUARD"
+  "ENABLE_CHECK_CODEX_AFTER_PLAN"
+  "ENABLE_CHECK_CODEX_BEFORE_WRITE"
+  "ENABLE_ERROR_TO_CODEX"
 )
 
 # Shared labels for HOOK_KEYS — used by _step_hooks() and _step_confirm().
@@ -457,6 +469,9 @@ _init_hook_labels() {
     "$STR_HOOKS_PR_LOG"
     "${STR_HOOKS_PRE_COMMIT:-Pre-compact auto-commit}"
     "${STR_HOOKS_DOC_SIZE:-Doc Size Guard - Warn when CLAUDE.md/AGENTS.md is too large}"
+    "${STR_HOOKS_CHECK_CODEX_AFTER_PLAN:-Check Codex After Plan - Codex review after plan/design save}"
+    "${STR_HOOKS_CHECK_CODEX_BEFORE_WRITE:-Check Codex Before Write - Codex review before large writes}"
+    "${STR_HOOKS_ERROR_TO_CODEX:-Error to Codex - Delegate errors to Codex for debugging}"
   )
 }
 
@@ -482,6 +497,9 @@ _apply_hooks_csv() {
       pr-log)     ENABLE_PR_CREATION_LOG="true" ;;
       pre-commit) ENABLE_PRE_COMPACT_COMMIT="true" ;;
       doc-size)   ENABLE_DOC_SIZE_GUARD="true" ;;
+      check-codex-after-plan) ENABLE_CHECK_CODEX_AFTER_PLAN="true" ;;
+      check-codex-before-write) ENABLE_CHECK_CODEX_BEFORE_WRITE="true" ;;
+      error-to-codex) ENABLE_ERROR_TO_CODEX="true" ;;
     esac
   done
 }
@@ -514,8 +532,10 @@ parse_cli_args() {
       --editor)          shift; EDITOR_CHOICE="${1:-}"; _CLI_OVERRIDES+=("EDITOR_CHOICE") ;;
       --new-init=*)      _set_bool ENABLE_NEW_INIT "${arg#*=}"; _CLI_OVERRIDES+=("ENABLE_NEW_INIT") ;;
       --new-init)        shift; _set_bool ENABLE_NEW_INIT "${1:-}"; _CLI_OVERRIDES+=("ENABLE_NEW_INIT") ;;
-      --codex-mcp=*)     _set_bool ENABLE_CODEX_MCP "${arg#*=}"; _CLI_OVERRIDES+=("ENABLE_CODEX_MCP") ;;
-      --codex-mcp)       shift; _set_bool ENABLE_CODEX_MCP "${1:-}"; _CLI_OVERRIDES+=("ENABLE_CODEX_MCP") ;;
+      --codex-cli=*)     _set_bool ENABLE_CODEX_CLI "${arg#*=}"; _CLI_OVERRIDES+=("ENABLE_CODEX_CLI") ;;
+      --codex-cli)       shift; _set_bool ENABLE_CODEX_CLI "${1:-}"; _CLI_OVERRIDES+=("ENABLE_CODEX_CLI") ;;
+      --codex-mcp=*)     _set_bool ENABLE_CODEX_CLI "${arg#*=}"; _CLI_OVERRIDES+=("ENABLE_CODEX_CLI") ;; # deprecated alias
+      --codex-mcp)       shift; _set_bool ENABLE_CODEX_CLI "${1:-}"; _CLI_OVERRIDES+=("ENABLE_CODEX_CLI") ;; # deprecated alias
       --commit-attribution=*) _set_bool COMMIT_ATTRIBUTION "${arg#*=}"; _CLI_OVERRIDES+=("COMMIT_ATTRIBUTION") ;;
       --commit-attribution)   shift; _set_bool COMMIT_ATTRIBUTION "${1:-}"; _CLI_OVERRIDES+=("COMMIT_ATTRIBUTION") ;;
       --hooks=*)
@@ -613,14 +633,14 @@ _prompt_yes_no() {
 
 _step_codex() {
   # Skip if explicitly set by CLI arg
-  local _ov; for _ov in "${_CLI_OVERRIDES[@]+"${_CLI_OVERRIDES[@]}"}"; do [[ "$_ov" == "ENABLE_CODEX_MCP" ]] && return; done
+  local _ov; for _ov in "${_CLI_OVERRIDES[@]+"${_CLI_OVERRIDES[@]}"}"; do [[ "$_ov" == "ENABLE_CODEX_CLI" ]] && return; done
 
   section "$STR_CODEX_TITLE"
   printf "  1) %s\n" "$STR_CODEX_YES"
   printf "  2) %s\n" "$STR_CODEX_NO"
   local _default="2"
-  if [[ "${ENABLE_CODEX_MCP:-}" == "true" ]]; then _default="1"; fi
-  _prompt_yes_no ENABLE_CODEX_MCP "$_default"
+  if [[ "${ENABLE_CODEX_CLI:-}" == "true" ]]; then _default="1"; fi
+  _prompt_yes_no ENABLE_CODEX_CLI "$_default"
 }
 
 _step_new_init() {
@@ -767,7 +787,7 @@ _step_confirm() {
 
   section "$STR_CONFIRM_TITLE"
   printf "%-20s : %s\n" "$STR_CONFIRM_LANGUAGE" "$(_language_label "$LANGUAGE")"
-  printf "%-20s : %s\n" "$STR_CONFIRM_CODEX" "$(_bool_label_enabled "$ENABLE_CODEX_MCP")"
+  printf "%-20s : %s\n" "$STR_CONFIRM_CODEX" "$(_bool_label_enabled "$ENABLE_CODEX_CLI")"
   printf "%-20s : %s\n" "$STR_CONFIRM_NEW_INIT" "$(_bool_label_enabled "$ENABLE_NEW_INIT")"
   printf "%-20s : %s\n" "$STR_CONFIRM_EDITOR" "$(_editor_label "$EDITOR_CHOICE")"
   printf "%-20s : %s\n" "$STR_CONFIRM_STATUSLINE" "$(_bool_label_enabled "${ENABLE_STATUSLINE:-false}")"
@@ -837,6 +857,9 @@ _fill_noninteractive_defaults() {
   [[ -z "$COMMIT_ATTRIBUTION" ]] && COMMIT_ATTRIBUTION="false"
   [[ -z "$ENABLE_NEW_INIT" ]] && ENABLE_NEW_INIT="true"
   [[ -z "${ENABLE_STATUSLINE:-}" ]] && ENABLE_STATUSLINE="true"
+  [[ -z "${ENABLE_CHECK_CODEX_AFTER_PLAN:-}" ]] && ENABLE_CHECK_CODEX_AFTER_PLAN="false"
+  [[ -z "${ENABLE_CHECK_CODEX_BEFORE_WRITE:-}" ]] && ENABLE_CHECK_CODEX_BEFORE_WRITE="false"
+  [[ -z "${ENABLE_ERROR_TO_CODEX:-}" ]] && ENABLE_ERROR_TO_CODEX="false"
 
   # Compute plugins if not already set
   if [[ -z "$SELECTED_PLUGINS" ]]; then
@@ -915,7 +938,10 @@ run_wizard() {
     EDITOR_CHOICE=""
     COMMIT_ATTRIBUTION=""
     ENABLE_NEW_INIT=""
-    ENABLE_CODEX_MCP=""
+    ENABLE_CODEX_CLI=""
+    ENABLE_CHECK_CODEX_AFTER_PLAN=""
+    ENABLE_CHECK_CODEX_BEFORE_WRITE=""
+    ENABLE_ERROR_TO_CODEX=""
   fi
 
   # Interactive wizard loop
@@ -941,7 +967,10 @@ run_wizard() {
       EDITOR_CHOICE=""
       COMMIT_ATTRIBUTION=""
       ENABLE_NEW_INIT=""
-      ENABLE_CODEX_MCP=""
+      ENABLE_CODEX_CLI=""
+      ENABLE_CHECK_CODEX_AFTER_PLAN=""
+      ENABLE_CHECK_CODEX_BEFORE_WRITE=""
+      ENABLE_ERROR_TO_CODEX=""
       continue
     fi
     break

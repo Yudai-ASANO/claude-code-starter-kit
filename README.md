@@ -176,7 +176,7 @@ Claude Code をインストールしただけでは、まっさらな状態で�
 > 個人的な実感として、Max 5x でも本気で開発していると月の途中で足りなくなることがあります。**最初から Max 20x にしておくのが、結果的に一番快適でコスパも良い** です。
 
 > **注意**: 上記は 2026 年 3 月時点の参考価格です。最新の料金は [claude.com/pricing](https://claude.com/pricing) をご確認ください。
-> Codex MCP（OpenAI 連携）を使う場合は、別途 ChatGPT の対象プラン契約、または OpenAI API キー認証と OpenAI API の利用料金が必要です。
+> Codex CLI（OpenAI 連携）を使う場合は、別途 ChatGPT の対象プラン契約、または OpenAI API キー認証と OpenAI API の利用料金が必要です。
 
 ### 個人で使う場合
 
@@ -348,7 +348,7 @@ cd claude-code-starter-kit
 
 ```
 1. 言語選択        → 日本語 or English
-2. Codex MCP       → 外部AIツール連携（わからなければ「いいえ」でOK）
+2. Codex CLI       → 外部AIツール連携（わからなければ「いいえ」でOK）
 3. エディタ        → VS Code / Cursor / Zed / Neovim / なし
 4. フック          → 安全装置の選択
 5. プラグイン      → 追加機能の選択
@@ -731,7 +731,7 @@ NONINTERACTIVE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/cloudna
   --language=ja \
   --editor=cursor \
   --new-init=true \
-  --codex-mcp=false \
+  --codex-cli=false \
   --commit-attribution=false \
   --hooks=safety-net,auto-update,git-push,prettier,console,memory,compact,pr-log,pre-commit \
   --plugins=security-guidance,commit-commands,pr-review-toolkit@claude-plugins-official,pr-review-toolkit@claude-code-plugins
@@ -858,9 +858,9 @@ Git が入っていない場合も、セットアップスクリプトが自動�
 はい。非対話モード（`--non-interactive`）と設定ファイル（`--config=`）を使えば、
 全員が同じコマンド 1 つで同じ環境を構築できます。
 
-### Q. Codex MCP って何ですか？必要ですか？
+### Q. Codex CLI って何ですか？必要ですか？
 
-Codex MCP は **OpenAI の Codex（AI コーディングツール）を Claude Code のサブエージェントとして連携する仕組み** です。
+Codex CLI は **OpenAI の Codex（AI コーディングツール）を Claude Code から `codex exec` コマンドで委譲呼び出しする仕組み** です。
 有効にすると、Claude Code が複雑なタスクを Codex に委譲して並列で作業できるようになります。
 
 **利用するには以下のいずれかが必要です：**
@@ -869,7 +869,7 @@ Codex MCP は **OpenAI の Codex（AI コーディングツール）を Claude C
 
 **わからない場合や契約していない場合は「いいえ」を選んで問題ありません。** Claude Code 単体でも十分に強力です。後から追加することもできます。
 
-#### Codex MCP を後から有効にする方法
+#### Codex CLI を後から有効にする方法
 
 1. Codex CLI をインストール：
    ```bash
@@ -889,10 +889,6 @@ Codex MCP は **OpenAI の Codex（AI コーディングツール）を Claude C
    echo 'export OPENAI_API_KEY="sk-your-key-here"' >> ~/.bashrc
    source ~/.bashrc
    printenv OPENAI_API_KEY | codex login --with-api-key
-   ```
-4. Claude Code に MCP サーバーを登録：
-   ```bash
-   claude mcp add -s user codex -- codex mcp-server
    ```
 
 ---

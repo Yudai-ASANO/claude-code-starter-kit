@@ -28,6 +28,9 @@ declare -A _FEATURE_FLAGS=(
   [auto-update]=ENABLE_AUTO_UPDATE
   [statusline]=ENABLE_STATUSLINE
   [doc-size-guard]=ENABLE_DOC_SIZE_GUARD
+  [check-codex-after-plan]=ENABLE_CHECK_CODEX_AFTER_PLAN
+  [check-codex-before-write]=ENABLE_CHECK_CODEX_BEFORE_WRITE
+  [error-to-codex]=ENABLE_ERROR_TO_CODEX
 )
 
 # ---------------------------------------------------------------------------
@@ -39,6 +42,9 @@ declare -A _FEATURE_HAS_SCRIPTS=(
   [auto-update]=true
   [statusline]=true
   [doc-size-guard]=true
+  [check-codex-after-plan]=true
+  [check-codex-before-write]=true
+  [error-to-codex]=true
 )
 
 # ---------------------------------------------------------------------------
@@ -49,10 +55,11 @@ _FEATURE_ORDER=(
   safety-net doc-blocker prettier-hooks console-log-guard
   memory-persistence strategic-compact pr-creation-log pre-compact-commit
   auto-update statusline doc-size-guard
+  check-codex-after-plan check-codex-before-write error-to-codex
 )
 
 # ---------------------------------------------------------------------------
 # Special-case features (not in _FEATURE_ORDER, handled individually):
 #   - git-push-review: EDITOR_CHOICE runtime substitution in build_settings_file()
-#   - codex-mcp: managed by lib/codex-setup.sh
+#   - codex-cli: managed by lib/codex-setup.sh (CLI install + auth only, no hooks)
 # ---------------------------------------------------------------------------

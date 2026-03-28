@@ -1,0 +1,9 @@
+{
+  "name": "check-codex-after-plan",
+  "displayName": "Codex Design Review Prompt",
+  "description": "Suggest Codex design review when plan/design files are updated",
+  "category": "codex",
+  "default": false,
+  "dependencies": [],
+  "conflicts": []
+}

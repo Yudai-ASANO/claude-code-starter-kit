@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.35.0] - 2026-03-28
+
+### Changed
+- Codex MCP 連携を Codex CLI 委譲に移行 — `codex exec` コマンドパターンによる直接呼び出し方式に変更
+- `ENABLE_CODEX_MCP` を `ENABLE_CODEX_CLI` にリネーム（旧フラグは後方互換として維持）
+- `--codex-mcp` CLI フラグを `--codex-cli` にリネーム（旧フラグは deprecated として維持）
+- Codex パーミッション（`Bash(codex exec *)`）を feature-scoped に配置（`features/codex-cli/hooks.json`）
+
+### Added
+- 新 Hook: `check-codex-after-plan` — プラン/設計ファイル更新時に Codex デザインレビューを提案
+- 新 Hook: `check-codex-before-write` — 5ファイル書き込みごとに Codex レビューを提案
+- 新 Hook: `error-to-codex` — コマンド失敗時に Codex デバッグを提案
+
+### Removed
+- MCP サーバー登録（`claude mcp add -s user codex -- codex mcp-server`）を setup フローから削除
+- MCP 関連の i18n 文字列（`STR_CODEX_MCP_*`）を削除
+
+### Migration
+- 既存ユーザー: `ENABLE_CODEX_MCP` は自動的に `ENABLE_CODEX_CLI` にマッピングされます
+- MCP 登録済みの場合: `claude mcp remove -s user codex` で手動削除してください（任意）
+
 ## [0.34.0] - 2026-03-25
 
 ### Added

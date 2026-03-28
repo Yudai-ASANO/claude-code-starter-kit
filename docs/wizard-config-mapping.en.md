@@ -15,7 +15,7 @@ Not every saved value is supposed to appear in `settings.json`. In particular, `
 | Step | Saved key / CLI | What it controls | Main destination | Visible in `settings.json` |
 |---|---|---|---|---|
 | Language | `LANGUAGE` / `--language` | UI language and generated language settings | `settings.json`, `CLAUDE.md`, i18n loading | Yes |
-| Codex MCP | `ENABLE_CODEX_MCP` / `--codex-mcp` | Whether to run Codex CLI auth and Claude MCP registration | Codex MCP setup in `setup.sh` | No |
+| Codex CLI | `ENABLE_CODEX_CLI` / `--codex-cli` | Whether to run Codex CLI install and auth | Codex CLI setup in `setup.sh` | No |
 | New `/init` | `ENABLE_NEW_INIT` / `--new-init` | Enable Claude Code's interactive `/init` flow | `settings.json` `env.CLAUDE_CODE_NEW_INIT` | Yes |
 | Editor | `EDITOR_CHOICE` / `--editor` | Editor command for the git push review hook | Hook template substitution, manifest | Indirectly |
 | Hooks | `ENABLE_*` / `--hooks` | Which hooks are enabled | Hook fragments merged into `settings.json` | Yes |
@@ -31,7 +31,7 @@ Not every saved value is supposed to appear in `settings.json`. In particular, `
 | `ENABLE_NEW_INIT` | Claude Code's new interactive `/init` mode | `settings.json` `env.CLAUDE_CODE_NEW_INIT` | Defaults to `true` |
 | `EDITOR_CHOICE` | Editor command for git push review | `features/git-push-review/hooks.json` | Use `none` if you do not want editor integration |
 | `COMMIT_ATTRIBUTION` | Claude Code attribution on or off | `settings.json` `attribution.commit`, `attribution.pr` | `false` clears both commit and PR attribution |
-| `ENABLE_CODEX_MCP` | Run Codex MCP setup or skip it | Codex CLI auth and `claude mcp add` | A setup action, not a JSON setting |
+| `ENABLE_CODEX_CLI` | Run Codex CLI setup or skip it | Codex CLI install and auth | A setup action, not a JSON setting |
 | `SELECTED_PLUGINS` | Recommended plugin selection | Plugin install flow, manifest | Supports `name@marketplace` |
 
 ## Content Installation Flags
@@ -62,6 +62,9 @@ These flags are used to merge the corresponding `features/*/hooks.json` fragment
 | `ENABLE_PRE_COMPACT_COMMIT` | Pre-compact Commit | Commit helper before compact | Yes |
 | `ENABLE_STATUSLINE` | Statusline | Statusline feature toggle | Yes |
 | `ENABLE_DOC_SIZE_GUARD` | Doc Size Guard | Warn when `CLAUDE.md` / `AGENTS.md` is too large | Yes |
+| `ENABLE_CHECK_CODEX_AFTER_PLAN` | Codex After Plan | Suggest Codex design review when plan files change | Yes |
+| `ENABLE_CHECK_CODEX_BEFORE_WRITE` | Codex Write Counter | Suggest Codex design review after every 5 file writes | Yes |
+| `ENABLE_ERROR_TO_CODEX` | Error to Codex | Suggest Codex debugging when commands fail | Yes |
 
 ## Common Misunderstandings
 
@@ -69,6 +72,6 @@ These flags are used to merge the corresponding `features/*/hooks.json` fragment
 
 That is expected. Plugin selection is consumed by the plugin installation flow and stored in the manifest for later reuse.
 
-### `ENABLE_CODEX_MCP` does not show up in `settings.json`
+### `ENABLE_CODEX_CLI` does not show up in `settings.json`
 
-That is expected. It controls whether Codex CLI auth and Claude MCP registration are executed, not whether a JSON key is written.
+That is expected. It controls whether Codex CLI install and auth are executed, not whether a JSON key is written.

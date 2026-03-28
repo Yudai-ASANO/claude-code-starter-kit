@@ -1,0 +1,9 @@
+{
+  "name": "error-to-codex",
+  "displayName": "Error-to-Codex Debug Prompt",
+  "description": "Suggest Codex debugging when Bash commands fail",
+  "category": "codex",
+  "default": false,
+  "dependencies": [],
+  "conflicts": []
+}

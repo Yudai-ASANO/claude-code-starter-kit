@@ -70,7 +70,7 @@ install.ps1 (Windows: WSL2 setup + clone repo via WSL + bootstrap)
       → write_manifest() — tracks deployed files for uninstall
       → _write_snapshot() — saves deployed files for future update comparison
       → plugin marketplace registration + install (multi-marketplace)
-      → Codex MCP setup (if enabled)
+      → Codex CLI setup (if enabled)
 
 install.sh (re-run with manifest v2 + snapshot)
   → setup.sh --update (update mode)
@@ -187,7 +187,7 @@ Helper functions in `lib/template.sh`: `_has_kit_markers()`, `_extract_kit_secti
 - `_MERGE_INTERACTIVE=false` ensures no prompts are shown
 - Sim dir snapshot/manifest are temporary artifacts — discarded after report generation
 - Diff/summary comparison basis is always "real `~/.claude` (current) vs sim dir (simulated)"
-- External side effects (shell RC, plugins, Codex MCP, Claude CLI) are individually guarded and logged as `[WOULD RUN]` entries via `_dryrun_log()`
+- External side effects (shell RC, plugins, Codex CLI, Claude CLI) are individually guarded and logged as `[WOULD RUN]` entries via `_dryrun_log()`
 - After the deploy flow completes in sim dir, `_dryrun_collect_file_changes()` walks the sim dir to find CREATE/MODIFY entries, then `_dryrun_show_results()` displays the grouped summary + settings.json unified diff
 
 ### Deploy Targets
@@ -213,7 +213,7 @@ Helper functions in `lib/template.sh`: `_has_kit_markers()`, `_extract_kit_secti
 - **Boolean handling**: `_bool_normalize()` accepts true/1/yes/on → "true". Use `is_true()` for checks.
 - **No eval**: All dynamic variable assignment uses `printf -v` and `${!var}` (indirect expansion) to prevent injection.
 - **Windows interop from WSL/MSYS**: Use `powershell.exe -NoProfile -Command '...'` for Windows-side operations. Always `tr -d '\r'` on output to strip CRLF.
-- **Codex MCP scope**: Always use `claude mcp add -s user` (user scope, not project scope).
+- **Codex CLI scope**: Codex CLI is invoked via `codex exec` command delegation (not MCP).
 - **Timeout portability**: Use `_run_with_timeout` wrapper (macOS lacks `timeout`).
 - **Config persistence**: `~/.claude-starter-kit.conf` uses `key="value"` format, parsed by `_safe_source_config()` (allowlisted key=value parser, never sourced as shell code).
 - **Temp file hygiene**: `setup.sh` sets `umask 077` at top, tracks temp files in `_SETUP_TMP_FILES` array, and registers `trap _cleanup_tmp EXIT INT TERM` for automatic cleanup.
@@ -223,7 +223,7 @@ Helper functions in `lib/template.sh`: `_has_kit_markers()`, `_extract_kit_secti
 - **sed delimiter choice**: When using `sed` with `|` delimiter (`s|...|...|`), escape `&`, `\`, and `|` in replacement strings — do NOT escape `/`.
 - **Top-level scope in setup.sh**: The plugin install section (after line ~430) runs in global scope, not inside a function. Use `_` prefixed variables (e.g., `_p`, `_p_name`, `_registered_mps`) instead of `local`.
 - **NONINTERACTIVE env var**: `install.sh` supports `NONINTERACTIVE=1` to auto-add `--non-interactive` flag for setup.sh.
-- **DRY_RUN variable**: `--dry-run` sets `DRY_RUN="true"`. In dry-run mode, `CLAUDE_DIR` is redirected to a temp sim dir so the normal deploy/update flow runs without touching real files. External operations (shell RC, plugins, Codex MCP, Claude CLI) are individually guarded and logged as `[WOULD RUN]`. Light prerequisites (git, jq, curl) may be installed with user consent in interactive mode; `--non-interactive --dry-run` installs nothing and aborts if tools are missing. Sim dir snapshot/manifest are temporary artifacts discarded after the summary report. The comparison basis is always "real `~/.claude` vs sim dir result".
+- **DRY_RUN variable**: `--dry-run` sets `DRY_RUN="true"`. In dry-run mode, `CLAUDE_DIR` is redirected to a temp sim dir so the normal deploy/update flow runs without touching real files. External operations (shell RC, plugins, Codex CLI, Claude CLI) are individually guarded and logged as `[WOULD RUN]`. Light prerequisites (git, jq, curl) may be installed with user consent in interactive mode; `--non-interactive --dry-run` installs nothing and aborts if tools are missing. Sim dir snapshot/manifest are temporary artifacts discarded after the summary report. The comparison basis is always "real `~/.claude` vs sim dir result".
 
 ## Security Hardening
 

@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "tool == 'Bash' && tool_output.exit_code != null && tool_output.exit_code != 0",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "__HOME__/.claude/hooks/error-to-codex/error-to-codex.sh",
+            "timeout": 5000
+          }
+        ]
+      }
+    ]
+  }
+}

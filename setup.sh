@@ -287,8 +287,8 @@ if [[ "${DRY_RUN:-false}" == "true" ]]; then
       [[ -n "$_dr_name" ]] && _dryrun_log "EXTERNAL" "Plugin" "claude plugin install $_dr_name"
     done
   fi
-  if is_true "${ENABLE_CODEX_MCP:-false}"; then
-    _dryrun_log "EXTERNAL" "Codex MCP" "claude mcp add -s user codex -- codex mcp-server"
+  if is_true "${ENABLE_CODEX_CLI:-false}"; then
+    _dryrun_log "EXTERNAL" "Codex CLI" "Codex CLI install + auth (interactive)"
   fi
 
   # Shell RC modification (PATH entry for ~/.local/bin)
@@ -454,7 +454,7 @@ if [[ -n "${SELECTED_PLUGINS:-}" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Codex MCP setup (sourced from lib/codex-setup.sh)
+# Codex CLI setup (sourced from lib/codex-setup.sh)
 # ---------------------------------------------------------------------------
 # shellcheck source=/dev/null
 . "$PROJECT_DIR/lib/codex-setup.sh"

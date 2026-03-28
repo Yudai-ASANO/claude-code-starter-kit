@@ -1,0 +1,9 @@
+{
+  "name": "check-codex-before-write",
+  "displayName": "Codex Write Counter",
+  "description": "Suggest Codex design review after every 5 file writes",
+  "category": "codex",
+  "default": false,
+  "dependencies": [],
+  "conflicts": []
+}
