@@ -1,9 +1,0 @@
-{
-  "name": "prettier-hooks",
-  "displayName": "Prettier Auto-format",
-  "description": "Auto-format JS/TS files with Prettier after edits",
-  "category": "hook",
-  "default": true,
-  "dependencies": [],
-  "conflicts": []
-}

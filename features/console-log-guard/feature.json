@@ -1,9 +1,0 @@
-{
-  "name": "console-log-guard",
-  "displayName": "Console.log Guard",
-  "description": "Warn about console.log in edited files and audit at session end",
-  "category": "hook",
-  "default": true,
-  "dependencies": [],
-  "conflicts": []
-}
