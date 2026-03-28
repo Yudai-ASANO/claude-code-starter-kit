@@ -19,8 +19,6 @@ set -euo pipefail
 declare -A _FEATURE_FLAGS=(
   [safety-net]=ENABLE_SAFETY_NET
   [doc-blocker]=ENABLE_DOC_BLOCKER
-  [prettier-hooks]=ENABLE_PRETTIER_HOOKS
-  [console-log-guard]=ENABLE_CONSOLE_LOG_GUARD
   [memory-persistence]=ENABLE_MEMORY_PERSISTENCE
   [strategic-compact]=ENABLE_STRATEGIC_COMPACT
   [pr-creation-log]=ENABLE_PR_CREATION_LOG
@@ -31,6 +29,9 @@ declare -A _FEATURE_FLAGS=(
   [check-codex-after-plan]=ENABLE_CHECK_CODEX_AFTER_PLAN
   [check-codex-before-write]=ENABLE_CHECK_CODEX_BEFORE_WRITE
   [error-to-codex]=ENABLE_ERROR_TO_CODEX
+  [harness-init]=ENABLE_HARNESS_INIT
+  [pre-commit-gate]=ENABLE_PRE_COMMIT_GATE
+  [post-test-analysis]=ENABLE_POST_TEST_ANALYSIS
 )
 
 # ---------------------------------------------------------------------------
@@ -45,6 +46,9 @@ declare -A _FEATURE_HAS_SCRIPTS=(
   [check-codex-after-plan]=true
   [check-codex-before-write]=true
   [error-to-codex]=true
+  [harness-init]=true
+  [pre-commit-gate]=true
+  [post-test-analysis]=true
 )
 
 # ---------------------------------------------------------------------------
@@ -52,10 +56,11 @@ declare -A _FEATURE_HAS_SCRIPTS=(
 # CRITICAL: safety-net MUST be first (PreToolUse runs in array order)
 # ---------------------------------------------------------------------------
 _FEATURE_ORDER=(
-  safety-net doc-blocker prettier-hooks console-log-guard
+  safety-net doc-blocker
   memory-persistence strategic-compact pr-creation-log pre-compact-commit
   auto-update statusline doc-size-guard
   check-codex-after-plan check-codex-before-write error-to-codex
+  harness-init pre-commit-gate post-test-analysis
 )
 
 # ---------------------------------------------------------------------------
