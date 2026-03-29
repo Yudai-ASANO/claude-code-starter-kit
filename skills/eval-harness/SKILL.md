@@ -50,10 +50,10 @@ Deterministic checks using code:
 grep -q "export function handleAuth" src/auth.ts && echo "PASS" || echo "FAIL"
 
 # Check if tests pass
-npm test -- --testPathPattern="auth" && echo "PASS" || echo "FAIL"
+<project-test-command> --testPathPattern="auth" && echo "PASS" || echo "FAIL"
 
 # Check if build succeeds
-npm run build && echo "PASS" || echo "FAIL"
+<project-build-command> && echo "PASS" || echo "FAIL"
 ```
 
 ### 2. Model-Based Grader
@@ -123,7 +123,7 @@ Write code to pass the defined evals.
 [Run each capability eval, record PASS/FAIL]
 
 # Run regression evals
-npm test -- --testPathPattern="existing"
+<project-test-command> -- --testPathPattern="existing"
 
 # Generate report
 ```

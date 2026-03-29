@@ -32,7 +32,7 @@ ALWAYS write tests first, then implement code to make tests pass.
 
 **Integration Tests** - API endpoints, database operations, service interactions, external API calls.
 
-**E2E Tests (Playwright)** - Critical user flows, complete workflows, browser automation, UI interactions.
+**E2E Tests** - Critical user flows, complete workflows, UI automation. Framework varies by platform (Playwright, Cypress, XCUITest, Espresso, Laravel Dusk, Molecule, etc.).
 
 ## TDD Workflow Steps
 
@@ -41,8 +41,8 @@ ALWAYS write tests first, then implement code to make tests pass.
 As a [role], I want to [action], so that [benefit]
 
 Example:
-As a user, I want to search for markets semantically,
-so that I can find relevant markets even without exact keywords.
+As a user, I want to search for items by keyword,
+so that I can find relevant items even without exact names.
 ```
 
 ### Step 2: Generate Test Cases
@@ -50,7 +50,9 @@ For each user journey, create comprehensive test cases covering happy paths, edg
 
 ### Step 3: Run Tests (They Should Fail)
 ```bash
-npm test
+# Use your project's test command:
+# JS/TS: npm test | Go: go test ./... | Swift: swift test
+# Kotlin: ./gradlew test | PHP: ./vendor/bin/phpunit | Python: pytest
 # Tests should fail - we haven't implemented yet
 ```
 
@@ -59,8 +61,7 @@ Write minimal code to make tests pass.
 
 ### Step 5: Run Tests Again
 ```bash
-npm test
-# Tests should now pass
+# Run the same test command - tests should now pass
 ```
 
 ### Step 6: Refactor
@@ -72,7 +73,10 @@ Improve code quality while keeping tests green:
 
 ### Step 7: Verify Coverage
 ```bash
-npm run test:coverage
+# Use your project's coverage command:
+# JS/TS: npm run test:coverage | Go: go test -cover ./...
+# Swift: swift test --enable-code-coverage | Python: pytest --cov
+# Kotlin: ./gradlew jacocoTestReport | PHP: ./vendor/bin/phpunit --coverage-text
 # Verify 80%+ coverage achieved
 ```
 

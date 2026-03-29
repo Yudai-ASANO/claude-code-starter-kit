@@ -1,8 +1,8 @@
 # Build and Fix
 
-Incrementally fix TypeScript and build errors:
+Incrementally fix compilation and build errors:
 
-1. Run build: npm run build or pnpm build
+1. Run build: use the project's build command
 
 2. Parse error output:
    - Group by file
@@ -27,3 +27,8 @@ Incrementally fix TypeScript and build errors:
    - New errors introduced
 
 Fix one error at a time for safety!
+
+## Related Agents
+
+This command invokes the `build-error-resolver` agent located at:
+`~/.claude/agents/build-error-resolver.md`

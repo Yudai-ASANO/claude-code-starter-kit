@@ -11,8 +11,8 @@ Located in `~/.claude/agents/`:
 | tdd-guide | Test-driven development | New features, bug fixes |
 | code-reviewer | Code review | After writing code |
 | security-reviewer | Security analysis | Before commits |
-| build-error-resolver | Fix build errors | When build fails |
-| e2e-runner | E2E testing | Critical user flows |
+| build-error-resolver | Fix build/compilation errors | When build fails |
+| e2e-runner | E2E testing | Critical user flows (detects framework) |
 | refactor-cleaner | Dead code cleanup | Code maintenance |
 | doc-updater | Documentation | Updating docs |
 

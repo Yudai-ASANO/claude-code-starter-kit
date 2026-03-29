@@ -2,10 +2,8 @@
 
 Safely identify and remove dead code with test verification:
 
-1. Run dead code analysis tools:
-   - knip: Find unused exports and files
-   - depcheck: Find unused dependencies
-   - ts-prune: Find unused TypeScript exports
+1. Run appropriate dead code analysis tools for the project's language
+   (e.g., knip/ts-prune for TypeScript, vulture for Python, deadcode for Go, etc.)
 
 2. Generate comprehensive report in .reports/dead-code-analysis.md
 
@@ -26,3 +24,8 @@ Safely identify and remove dead code with test verification:
 6. Show summary of cleaned items
 
 Never delete code without running tests first!
+
+## Related Agents
+
+This command invokes the `refactor-cleaner` agent located at:
+`~/.claude/agents/refactor-cleaner.md`

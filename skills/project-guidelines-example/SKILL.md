@@ -5,7 +5,7 @@ description: Example project-specific skill template. Use as a starting point wh
 
 # Project Guidelines Skill (Example)
 
-This is an example of a project-specific skill. Use this as a template for your own projects.
+> **IMPORTANT: This is an EXAMPLE project. Replace with your project's actual architecture and patterns.** Use this as a template -- copy the structure, then fill in your own tech stack, file layout, code patterns, and deployment workflow.
 
 Based on a real production application: [Zenith](https://zenith.chat) - AI-powered customer discovery platform.
 
@@ -33,7 +33,7 @@ Reference this skill when working on the specific project it's designed for. Pro
 5. **Many small files** - 200-400 lines typical, 800 max
 6. **No console.log** in production code
 7. **Proper error handling** with try/catch
-8. **Input validation** with Pydantic/Zod
+8. **Input validation** with validation library
 
 ## Related Skills
 

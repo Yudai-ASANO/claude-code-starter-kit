@@ -55,8 +55,8 @@ Sprint contract: "Add user login endpoint"
 
 | # | Criterion | Verifier | Expected | Actual | Verdict |
 |---|-----------|----------|----------|--------|---------|
-| 1 | Unit tests pass | `npm test -- --testPathPattern=login` | exit 0, all suites green | exit 0, 12 passed | PASS |
-| 2 | Lint clean | `npm run lint src/routes/login.ts` | exit 0, no warnings | exit 0 | PASS |
+| 1 | Unit tests pass | `<project-test-command> -- --testPathPattern=login` | exit 0, all suites green | exit 0, 12 passed | PASS |
+| 2 | Lint clean | `<project-lint-command> src/routes/login.ts` | exit 0, no warnings | exit 0 | PASS |
 | 3 | Integration test returns 200 | `curl -s -o /dev/null -w "%{http_code}" POST /api/login` | 200 | 404 | FAIL |
 
 **Overall: FAIL (1/3 failed)**

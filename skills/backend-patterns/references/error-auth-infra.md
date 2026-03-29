@@ -16,15 +16,26 @@ class ApiError extends Error {
 
 export function errorHandler(error: unknown, req: Request): Response {
   if (error instanceof ApiError) {
-    return NextResponse.json({ success: false, error: error.message }, { status: error.statusCode })
+    return new Response(
+      JSON.stringify({ success: false, error: error.message }),
+      { status: error.statusCode, headers: { 'Content-Type': 'application/json' } }
+    )
   }
-  if (error instanceof z.ZodError) {
-    return NextResponse.json({ success: false, error: 'Validation failed', details: error.errors }, { status: 400 })
+  if (error instanceof ValidationError) {
+    return new Response(
+      JSON.stringify({ success: false, error: 'Validation failed', details: error.errors }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    )
   }
   console.error('Unexpected error:', error)
-  return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
+  return new Response(
+    JSON.stringify({ success: false, error: 'Internal server error' }),
+    { status: 500, headers: { 'Content-Type': 'application/json' } }
+  )
 }
 ```
+
+Adapt the `ValidationError` class to match your validation library (Zod `ZodError`, Pydantic `ValidationError`, etc.).
 
 ## Retry with Exponential Backoff
 
@@ -51,7 +62,7 @@ async function fetchWithRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<
 ```typescript
 export function verifyToken(token: string): JWTPayload {
   try {
-    return jwt.verify(token, process.env.JWT_SECRET!) as JWTPayload
+    return jwt.verify(token, getEnvVar('JWT_SECRET')) as JWTPayload
   } catch (error) {
     throw new ApiError(401, 'Invalid token')
   }
@@ -67,6 +78,8 @@ export function hasPermission(user: User, permission: Permission): boolean {
   return rolePermissions[user.role].includes(permission)
 }
 ```
+
+**Note:** Always load secrets from environment variables or a secrets manager. Never hardcode tokens, keys, or passwords.
 
 ## Simple Rate Limiter
 
@@ -85,6 +98,8 @@ class RateLimiter {
   }
 }
 ```
+
+For production, use a distributed rate limiter backed by a cache store (e.g., Redis) to work across multiple server instances.
 
 ## Background Job Queue
 

@@ -19,10 +19,10 @@ Invoke this skill:
 
 ### Phase 1: Build Verification
 ```bash
-# Check if project builds
-npm run build 2>&1 | tail -20
-# OR
-pnpm build 2>&1 | tail -20
+# Check if project builds (use project's build command)
+# JS/TS: npm run build | Go: go build ./... | Swift: swift build
+# Kotlin: ./gradlew build | PHP: composer install | Python: pip install -e .
+<project-build-command> 2>&1 | tail -20
 ```
 
 If build fails, STOP and fix before continuing.
@@ -49,8 +49,8 @@ ruff check . 2>&1 | head -30
 
 ### Phase 4: Test Suite
 ```bash
-# Run tests with coverage
-npm run test -- --coverage 2>&1 | tail -50
+# Run tests with coverage (use project's coverage command)
+<project-test-coverage-command> 2>&1 | tail -50
 
 # Check coverage threshold
 # Target: 80% minimum

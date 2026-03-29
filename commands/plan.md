@@ -36,57 +36,53 @@ The planner agent will:
 ## Example Usage
 
 ```
-User: /plan I need to add real-time notifications when markets resolve
+User: /plan I need to add real-time notifications when tasks are completed
 
 Agent (planner):
-# Implementation Plan: Real-Time Market Resolution Notifications
+# Implementation Plan: Real-Time Task Completion Notifications
 
 ## Requirements Restatement
-- Send notifications to users when markets they're watching resolve
+- Send notifications to users when tasks they're watching are completed
 - Support multiple notification channels (in-app, email, webhook)
 - Ensure notifications are delivered reliably
-- Include market outcome and user's position result
+- Include task outcome and assignee result
 
 ## Implementation Phases
 
 ### Phase 1: Database Schema
-- Add notifications table with columns: id, user_id, market_id, type, status, created_at
+- Add notifications table with columns: id, user_id, task_id, type, status, created_at
 - Add user_notification_preferences table for channel preferences
-- Create indexes on user_id and market_id for performance
+- Create indexes on user_id and task_id for performance
 
 ### Phase 2: Notification Service
-- Create notification service in lib/notifications.ts
-- Implement notification queue using BullMQ/Redis
+- Create notification service module
+- Implement notification queue using a message broker
 - Add retry logic for failed deliveries
 - Create notification templates
 
 ### Phase 3: Integration Points
-- Hook into market resolution logic (when status changes to "resolved")
-- Query all users with positions in market
+- Hook into task completion logic (when status changes to "completed")
+- Query all users watching the task
 - Enqueue notifications for each user
 
 ### Phase 4: Frontend Components
 - Create NotificationBell component in header
 - Add NotificationList modal
-- Implement real-time updates via Supabase subscriptions
+- Implement real-time updates via WebSocket/SSE subscriptions
 - Add notification preferences page
 
 ## Dependencies
-- Redis (for queue)
-- Email service (SendGrid/Resend)
-- Supabase real-time subscriptions
+- Message queue (Redis, RabbitMQ, etc.)
+- Email service (SendGrid/Resend/SES)
+- Real-time subscription mechanism
 
 ## Risks
 - HIGH: Email deliverability (SPF/DKIM required)
-- MEDIUM: Performance with 1000+ users per market
-- MEDIUM: Notification spam if markets resolve frequently
+- MEDIUM: Performance with 1000+ concurrent users
+- MEDIUM: Notification spam if events fire frequently
 - LOW: Real-time subscription overhead
 
 ## Estimated Complexity: MEDIUM
-- Backend: 4-6 hours
-- Frontend: 3-4 hours
-- Testing: 2-3 hours
-- Total: 9-13 hours
 
 **WAITING FOR CONFIRMATION**: Proceed with this plan? (yes/no/modify)
 ```
@@ -104,7 +100,7 @@ If you want changes, respond with:
 
 After planning:
 - Use `/tdd` to implement with test-driven development
-- Use `/build-and-fix` if build errors occur
+- Use `/build-fix` if build errors occur
 - Use `/code-review` to review completed implementation
 
 ## Related Agents

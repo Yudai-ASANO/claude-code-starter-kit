@@ -85,7 +85,7 @@ For each design decision, document:
 ### Frontend Patterns
 - **Component Composition**: Build complex UI from simple components
 - **Container/Presenter**: Separate data logic from presentation
-- **Custom Hooks**: Reusable stateful logic
+- **Reusable Logic Encapsulation**: Extract shared stateful or stateless logic into reusable units (hooks, composables, services, mixins, etc.)
 - **Context for Global State**: Avoid prop drilling
 - **Code Splitting**: Lazy load routes and heavy components
 
@@ -100,7 +100,7 @@ For each design decision, document:
 - **Normalized Database**: Reduce redundancy
 - **Denormalized for Read Performance**: Optimize queries
 - **Event Sourcing**: Audit trail and replayability
-- **Caching Layers**: Redis, CDN
+- **Caching Layers**: In-memory cache, CDN
 - **Eventual Consistency**: For distributed systems
 
 ## Architecture Decision Records (ADRs)
@@ -108,37 +108,33 @@ For each design decision, document:
 For significant architectural decisions, create ADRs:
 
 ```markdown
-# ADR-001: Use Redis for Semantic Search Vector Storage
+# ADR-001: [Title of Decision]
 
 ## Context
-Need to store and query 1536-dimensional embeddings for semantic market search.
+Describe the problem or requirement that led to this decision.
 
 ## Decision
-Use Redis Stack with vector search capability.
+State the chosen approach and key reasons.
 
 ## Consequences
 
 ### Positive
-- Fast vector similarity search (<10ms)
-- Built-in KNN algorithm
-- Simple deployment
-- Good performance up to 100K vectors
+- Benefit 1
+- Benefit 2
 
 ### Negative
-- In-memory storage (expensive for large datasets)
-- Single point of failure without clustering
-- Limited to cosine similarity
+- Drawback 1
+- Drawback 2
 
 ### Alternatives Considered
-- **PostgreSQL pgvector**: Slower, but persistent storage
-- **Pinecone**: Managed service, higher cost
-- **Weaviate**: More features, more complex setup
+- **Alternative A**: Trade-offs
+- **Alternative B**: Trade-offs
 
 ## Status
-Accepted
+Proposed | Accepted | Superseded
 
 ## Date
-2025-01-15
+YYYY-MM-DD
 ```
 
 ## System Design Checklist
@@ -183,28 +179,28 @@ Watch for these architectural anti-patterns:
 - **Tight Coupling**: Components too dependent
 - **God Object**: One class/component does everything
 
-## Project-Specific Architecture (Example)
+## Project-Specific Architecture (Template)
 
-Example architecture for an AI-powered SaaS platform:
+Replace the placeholders below with your actual architecture:
 
 ### Current Architecture
-- **Frontend**: Next.js 15 (Vercel/Cloud Run)
-- **Backend**: FastAPI or Express (Cloud Run/Railway)
-- **Database**: PostgreSQL (Supabase)
-- **Cache**: Redis (Upstash/Railway)
-- **AI**: Claude API with structured output
-- **Real-time**: Supabase subscriptions
+- **Frontend**: [Framework + Version]
+- **Backend**: [Framework + Version]
+- **Database**: [Database + hosting]
+- **Cache**: [Cache solution]
+
+> Replace with your actual architecture.
 
 ### Key Design Decisions
-1. **Hybrid Deployment**: Vercel (frontend) + Cloud Run (backend) for optimal performance
-2. **AI Integration**: Structured output with Pydantic/Zod for type safety
-3. **Real-time Updates**: Supabase subscriptions for live data
-4. **Immutable Patterns**: Spread operators for predictable state
+1. **Deployment Strategy**: Document where and how each component is deployed
+2. **Schema Validation**: Enforce type safety at system boundaries with validation libraries
+3. **Real-time Updates**: Choose a push mechanism appropriate to your stack (WebSockets, SSE, polling, etc.)
+4. **Immutable Data Patterns**: Avoid in-place mutation for predictable state management
 5. **Many Small Files**: High cohesion, low coupling
 
 ### Scalability Plan
 - **10K users**: Current architecture sufficient
-- **100K users**: Add Redis clustering, CDN for static assets
+- **100K users**: Add cache clustering, CDN for static assets
 - **1M users**: Microservices architecture, separate read/write databases
 - **10M users**: Event-driven architecture, distributed caching, multi-region
 

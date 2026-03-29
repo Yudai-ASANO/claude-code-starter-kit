@@ -2,45 +2,46 @@
 
 ## API Response Format
 
-```typescript
-interface ApiResponse<T> {
-  success: boolean
-  data?: T
-  error?: string
-  meta?: {
-    total: number
-    page: number
-    limit: number
+Use a consistent response envelope for all API endpoints:
+
+```
+{
+  "success": true/false,
+  "data": <payload>,           // present on success
+  "error": "<message>",        // present on failure
+  "meta": {                    // optional pagination
+    "total": 100,
+    "page": 1,
+    "limit": 20
   }
 }
 ```
 
-## Custom Hooks Pattern
+Adapt to your language's type system (TypeScript interface, Python dataclass, Go struct, Kotlin data class, PHP array/DTO, etc.).
 
-```typescript
-export function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+## Debounce / Throttle Pattern
 
-  useEffect(() => {
-    const handler = setTimeout(() => setDebouncedValue(value), delay)
-    return () => clearTimeout(handler)
-  }, [value, delay])
-
-  return debouncedValue
-}
-```
+Encapsulate reusable timing logic in a dedicated utility or hook:
+- **Web (React)**: Custom hook `useDebounce(value, delay)`
+- **Web (Vue)**: Composable `useDebounce(value, delay)`
+- **iOS (Swift)**: Combine `debounce(for:scheduler:)` or async `Task.sleep`
+- **Android (Kotlin)**: Flow `debounce(timeoutMillis)` or coroutine delay
+- **Backend**: Utility function with timer/scheduler
 
 ## Repository Pattern
 
-```typescript
-interface Repository<T> {
-  findAll(filters?: Filters): Promise<T[]>
-  findById(id: string): Promise<T | null>
-  create(data: CreateDto): Promise<T>
-  update(id: string, data: UpdateDto): Promise<T>
-  delete(id: string): Promise<void>
-}
+Abstract data access behind a repository interface:
+
 ```
+Repository<T>:
+  findAll(filters?) → T[]
+  findById(id) → T | null
+  create(data) → T
+  update(id, data) → T
+  delete(id) → void
+```
+
+Implement with your ORM/database client. This pattern is universal across languages and frameworks.
 
 ## Skeleton Projects
 

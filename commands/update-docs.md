@@ -2,8 +2,8 @@
 
 Sync documentation from source-of-truth:
 
-1. Read package.json scripts section
-   - Generate scripts reference table
+1. Read the project's build/task configuration
+   - Generate scripts/tasks reference table
    - Include descriptions from comments
 
 2. Read .env.example
@@ -28,4 +28,4 @@ Sync documentation from source-of-truth:
 
 6. Show diff summary
 
-Single source of truth: package.json and .env.example
+Single source of truth: the project's build/task configuration and .env.example

@@ -1,149 +1,257 @@
 # Test Code Templates
 
-## Unit Test Pattern (Jest/Vitest)
+Templates for common test patterns. Detect the project's language and test framework, then use the matching section.
+
+## Unit Test Patterns
+
+### JavaScript/TypeScript (Jest/Vitest)
 ```typescript
-import { render, screen, fireEvent } from '@testing-library/react'
-import { Button } from './Button'
-
-describe('Button Component', () => {
-  it('renders with correct text', () => {
-    render(<Button>Click me</Button>)
-    expect(screen.getByText('Click me')).toBeInTheDocument()
+describe('calculateScore', () => {
+  it('returns high score for valid input', () => {
+    const result = calculateScore({ value: 100, weight: 0.5 })
+    expect(result).toBeGreaterThan(80)
   })
 
-  it('calls onClick when clicked', () => {
-    const handleClick = jest.fn()
-    render(<Button onClick={handleClick}>Click</Button>)
-
-    fireEvent.click(screen.getByRole('button'))
-
-    expect(handleClick).toHaveBeenCalledTimes(1)
+  it('returns 0 for empty input', () => {
+    expect(calculateScore({ value: 0, weight: 0 })).toBe(0)
   })
 
-  it('is disabled when disabled prop is true', () => {
-    render(<Button disabled>Click</Button>)
-    expect(screen.getByRole('button')).toBeDisabled()
+  it('throws on invalid input', () => {
+    expect(() => calculateScore(null)).toThrow()
   })
 })
 ```
 
-## API Integration Test Pattern
+### Python (pytest)
+```python
+def test_calculate_score_valid_input():
+    result = calculate_score(value=100, weight=0.5)
+    assert result > 80
+
+def test_calculate_score_empty_input():
+    assert calculate_score(value=0, weight=0) == 0
+
+def test_calculate_score_invalid_input():
+    with pytest.raises(ValueError):
+        calculate_score(None)
+```
+
+### Go (testing)
+```go
+func TestCalculateScore(t *testing.T) {
+    t.Run("returns high score for valid input", func(t *testing.T) {
+        result := CalculateScore(100, 0.5)
+        if result <= 80 {
+            t.Errorf("expected > 80, got %f", result)
+        }
+    })
+
+    t.Run("returns 0 for empty input", func(t *testing.T) {
+        result := CalculateScore(0, 0)
+        if result != 0 {
+            t.Errorf("expected 0, got %f", result)
+        }
+    })
+}
+```
+
+### Swift (XCTest)
+```swift
+class ScoreTests: XCTestCase {
+    func testCalculateScoreValidInput() {
+        let result = calculateScore(value: 100, weight: 0.5)
+        XCTAssertGreaterThan(result, 80)
+    }
+
+    func testCalculateScoreEmptyInput() {
+        XCTAssertEqual(calculateScore(value: 0, weight: 0), 0)
+    }
+}
+```
+
+### Kotlin (JUnit 5)
+```kotlin
+class ScoreTest {
+    @Test
+    fun `returns high score for valid input`() {
+        val result = calculateScore(value = 100, weight = 0.5)
+        assertTrue(result > 80)
+    }
+
+    @Test
+    fun `returns 0 for empty input`() {
+        assertEquals(0.0, calculateScore(value = 0, weight = 0.0))
+    }
+}
+```
+
+### PHP (PHPUnit)
+```php
+class ScoreTest extends TestCase
+{
+    public function testCalculateScoreValidInput(): void
+    {
+        $result = calculateScore(value: 100, weight: 0.5);
+        $this->assertGreaterThan(80, $result);
+    }
+
+    public function testCalculateScoreEmptyInput(): void
+    {
+        $this->assertEquals(0, calculateScore(value: 0, weight: 0));
+    }
+}
+```
+
+## API / Integration Test Patterns
+
+### JavaScript/TypeScript (supertest / framework handler)
 ```typescript
-import { NextRequest } from 'next/server'
-import { GET } from './route'
-
-describe('GET /api/markets', () => {
-  it('returns markets successfully', async () => {
-    const request = new NextRequest('http://localhost/api/markets')
-    const response = await GET(request)
-    const data = await response.json()
-
+describe('GET /api/items', () => {
+  it('returns items successfully', async () => {
+    const response = await request(app).get('/api/items')
     expect(response.status).toBe(200)
-    expect(data.success).toBe(true)
-    expect(Array.isArray(data.data)).toBe(true)
+    expect(response.body.success).toBe(true)
+    expect(Array.isArray(response.body.data)).toBe(true)
   })
 
   it('validates query parameters', async () => {
-    const request = new NextRequest('http://localhost/api/markets?limit=invalid')
-    const response = await GET(request)
-
+    const response = await request(app).get('/api/items?limit=invalid')
     expect(response.status).toBe(400)
-  })
-
-  it('handles database errors gracefully', async () => {
-    // Mock database failure
-    const request = new NextRequest('http://localhost/api/markets')
-    // Test error handling
   })
 })
 ```
 
-## E2E Test Pattern (Playwright)
+### Python (httpx / FastAPI TestClient)
+```python
+def test_get_items(client):
+    response = client.get("/api/items")
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+
+def test_get_items_invalid_params(client):
+    response = client.get("/api/items?limit=invalid")
+    assert response.status_code == 400
+```
+
+### Go (net/http/httptest)
+```go
+func TestGetItems(t *testing.T) {
+    req := httptest.NewRequest("GET", "/api/items", nil)
+    w := httptest.NewRecorder()
+    handler.ServeHTTP(w, req)
+
+    if w.Code != http.StatusOK {
+        t.Errorf("expected 200, got %d", w.Code)
+    }
+}
+```
+
+### PHP (Laravel)
+```php
+public function testGetItems(): void
+{
+    $response = $this->getJson('/api/items');
+    $response->assertStatus(200)
+             ->assertJsonStructure(['success', 'data']);
+}
+```
+
+## E2E Test Patterns
+
+Use the project's detected E2E framework. See `~/.claude/agents/e2e-runner.md` for full framework-specific guidance.
+
+### Web: Playwright
 ```typescript
 import { test, expect } from '@playwright/test'
 
-test('user can search and filter markets', async ({ page }) => {
-  // Navigate to markets page
-  await page.goto('/')
-  await page.click('a[href="/markets"]')
+test('user can search and view items', async ({ page }) => {
+  await page.goto('/items')
+  await page.fill('[data-testid="search-input"]', 'test query')
+  await page.waitForResponse(resp => resp.url().includes('/api/items'))
 
-  // Verify page loaded
-  await expect(page.locator('h1')).toContainText('Markets')
-
-  // Search for markets
-  await page.fill('input[placeholder="Search markets"]', 'election')
-
-  // Wait for debounce and results
-  await page.waitForTimeout(600)
-
-  // Verify search results displayed
-  const results = page.locator('[data-testid="market-card"]')
-  await expect(results).toHaveCount(5, { timeout: 5000 })
-
-  // Verify results contain search term
-  const firstResult = results.first()
-  await expect(firstResult).toContainText('election', { ignoreCase: true })
-
-  // Filter by status
-  await page.click('button:has-text("Active")')
-
-  // Verify filtered results
-  await expect(results).toHaveCount(3)
+  const results = page.locator('[data-testid="item-card"]')
+  await expect(results.first()).toBeVisible()
 })
+```
 
-test('user can create a new market', async ({ page }) => {
-  // Login first
-  await page.goto('/creator-dashboard')
-
-  // Fill market creation form
-  await page.fill('input[name="name"]', 'Test Market')
-  await page.fill('textarea[name="description"]', 'Test description')
-  await page.fill('input[name="endDate"]', '2025-12-31')
-
-  // Submit form
-  await page.click('button[type="submit"]')
-
-  // Verify success message
-  await expect(page.locator('text=Market created successfully')).toBeVisible()
-
-  // Verify redirect to market page
-  await expect(page).toHaveURL(/\/markets\/test-market/)
+### Web: Cypress
+```typescript
+it('user can search and view items', () => {
+  cy.visit('/items')
+  cy.get('[data-testid="search-input"]').type('test query')
+  cy.intercept('GET', '/api/items*').as('search')
+  cy.wait('@search')
+  cy.get('[data-testid="item-card"]').should('have.length.greaterThan', 0)
 })
+```
+
+### iOS: XCUITest
+```swift
+func testSearchAndViewItems() throws {
+    let app = XCUIApplication()
+    app.launch()
+
+    app.textFields["searchInput"].tap()
+    app.textFields["searchInput"].typeText("test query")
+
+    let firstCell = app.cells.matching(identifier: "itemCell").firstMatch
+    XCTAssertTrue(firstCell.waitForExistence(timeout: 5))
+}
+```
+
+### Android: Espresso
+```kotlin
+@Test
+fun searchAndViewItems() {
+    onView(withId(R.id.searchInput))
+        .perform(typeText("test query"), closeSoftKeyboard())
+    onView(withId(R.id.recyclerView))
+        .check(matches(hasMinimumChildCount(1)))
+}
 ```
 
 ## Mocking External Services
 
-### Supabase Mock
+### JavaScript/TypeScript (jest.mock)
 ```typescript
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({
-          data: [{ id: 1, name: 'Test Market' }],
-          error: null
-        }))
-      }))
+// Mock database client
+jest.mock('@/lib/db', () => ({
+  db: {
+    query: jest.fn(() => Promise.resolve({
+      rows: [{ id: 1, name: 'Test Item' }]
     }))
   }
 }))
-```
 
-### Redis Mock
-```typescript
-jest.mock('@/lib/redis', () => ({
-  searchMarketsByVector: jest.fn(() => Promise.resolve([
-    { slug: 'test-market', similarity_score: 0.95 }
-  ])),
-  checkRedisHealth: jest.fn(() => Promise.resolve({ connected: true }))
+// Mock external API
+jest.mock('@/lib/api-client', () => ({
+  fetchData: jest.fn(() => Promise.resolve({ result: 'mock' }))
 }))
 ```
 
-### OpenAI Mock
-```typescript
-jest.mock('@/lib/openai', () => ({
-  generateEmbedding: jest.fn(() => Promise.resolve(
-    new Array(1536).fill(0.1) // Mock 1536-dim embedding
-  ))
-}))
+### Python (unittest.mock)
+```python
+from unittest.mock import patch, MagicMock
+
+@patch('app.db.query')
+def test_with_mocked_db(mock_query):
+    mock_query.return_value = [{'id': 1, 'name': 'Test Item'}]
+    result = get_items()
+    assert len(result) == 1
+```
+
+### Go (interface + test double)
+```go
+type MockDB struct{}
+
+func (m *MockDB) Query(q string) ([]Item, error) {
+    return []Item{{ID: 1, Name: "Test Item"}}, nil
+}
+
+func TestGetItems(t *testing.T) {
+    svc := NewService(&MockDB{})
+    items, err := svc.GetItems()
+    if err != nil { t.Fatal(err) }
+    if len(items) != 1 { t.Errorf("expected 1 item, got %d", len(items)) }
+}
 ```

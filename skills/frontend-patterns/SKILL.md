@@ -5,6 +5,8 @@ description: Frontend development patterns for React, Next.js, state management,
 
 # Frontend Development Patterns
 
+> **Note:** This skill is specific to React and React-based frameworks (Next.js, Remix). For other UI frameworks, adapt these concepts or create framework-specific skills.
+
 Modern frontend patterns for React, Next.js, and performant user interfaces.
 
 ## Pattern Categories

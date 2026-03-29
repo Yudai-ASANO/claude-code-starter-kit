@@ -25,8 +25,8 @@ Sprint Contract format:
 ### Acceptance Criteria
 | # | Criterion | Verifier Command | Expected Result |
 |---|-----------|-----------------|-----------------|
-| 1 | Feature works | npm test -- --grep "feature" | exit 0 |
-| 2 | Types clean | npx tsc --noEmit | exit 0 |
+| 1 | Feature works | <project-test-command> --grep "feature" | exit 0 |
+| 2 | Build clean | <project-build-command> | exit 0 |
 ```
 
 #### Phase 2: Generation

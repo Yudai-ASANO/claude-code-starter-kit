@@ -4,58 +4,48 @@
 
 ALWAYS create new objects, NEVER mutate:
 
-```javascript
-// WRONG: Mutation
-function updateUser(user, name) {
-  user.name = name  // MUTATION!
-  return user
-}
-
-// CORRECT: Immutability
-function updateUser(user, name) {
-  return {
-    ...user,
-    name
-  }
-}
-```
+| Language | Immutable pattern |
+|----------|-------------------|
+| JS/TS | `{ ...user, name: 'New' }` (spread operator) |
+| Python | `{**user, 'name': 'New'}` or `dataclasses.replace(user, name='New')` |
+| Swift | `let` by default; use structs with value semantics |
+| Kotlin | `data class` + `copy(name = "New")` |
+| Go | Create new struct: `User{...old, Name: "New"}` |
+| PHP | `clone` + modify on new instance, or use immutable value objects |
 
 ## File Organization
 
 MANY SMALL FILES > FEW LARGE FILES:
 - High cohesion, low coupling
 - 200-400 lines typical, 800 max
-- Extract utilities from large components
+- Extract utilities from large modules
 - Organize by feature/domain, not by type
 
 ## Error Handling
 
-ALWAYS handle errors comprehensively:
+ALWAYS handle errors comprehensively. Use the language's idiomatic error pattern:
 
-```typescript
-try {
-  const result = await riskyOperation()
-  return result
-} catch (error) {
-  console.error('Operation failed:', error)
-  throw new Error('Detailed user-friendly message')
-}
-```
+| Language | Pattern |
+|----------|---------|
+| JS/TS | `try/catch` + typed errors |
+| Python | `try/except` with specific exception types |
+| Go | `if err != nil { return fmt.Errorf("context: %w", err) }` |
+| Swift | `do/catch` + `throws` |
+| Kotlin | `try/catch` or `Result<T>` |
+| PHP | `try/catch` with specific exception classes |
 
 ## Input Validation
 
-ALWAYS validate user input:
+ALWAYS validate user input. Use the project's validation library:
 
-```typescript
-import { z } from 'zod'
-
-const schema = z.object({
-  email: z.string().email(),
-  age: z.number().int().min(0).max(150)
-})
-
-const validated = schema.parse(input)
-```
+| Language | Libraries |
+|----------|-----------|
+| JS/TS | Zod, Joi, class-validator |
+| Python | Pydantic, marshmallow, cerberus |
+| Swift | Custom validation or Combine validators |
+| Kotlin | Bean Validation (JSR 380), konform |
+| PHP | Laravel Validation, Symfony Validator |
+| Go | go-playground/validator |
 
 ## Code Quality Checklist
 
@@ -65,6 +55,6 @@ Before marking work complete:
 - [ ] Files are focused (<800 lines)
 - [ ] No deep nesting (>4 levels)
 - [ ] Proper error handling
-- [ ] No console.log statements
+- [ ] No debug logging statements left in
 - [ ] No hardcoded values
 - [ ] No mutation (immutable patterns used)

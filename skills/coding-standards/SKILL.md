@@ -1,6 +1,6 @@
 ---
 name: coding-standards
-description: Universal coding standards, best practices, and patterns for TypeScript, JavaScript, React, and Node.js development.
+description: Universal coding standards, best practices, and patterns for software development across any technology stack.
 ---
 
 # Coding Standards & Best Practices
@@ -11,24 +11,24 @@ Universal coding standards applicable across all projects. Detailed patterns and
 
 | What you need | Reference file |
 |---|---|
-| Naming, immutability, types, error handling, async | `references/typescript-patterns.md` |
-| Components, hooks, state, memoization, lazy loading | `references/react-patterns.md` |
+| Naming, immutability, types, error handling, async | `references/language-patterns.md` |
+| Components, reusable logic, state, memoization, lazy loading | `references/ui-framework-patterns.md` |
 | REST API design, file structure, testing, code smells | `references/api-testing-patterns.md` |
 
 ## Categories
 
-### TypeScript/JavaScript Patterns
-Variable and function naming conventions, immutability (critical), comprehensive error handling, async/await best practices, type safety, comments/documentation style, and database query performance.
+### Language Patterns
+Variable and function naming conventions, immutability (critical), comprehensive error handling, async/concurrent best practices, type safety, comments/documentation style, and database query performance.
 
-See: `references/typescript-patterns.md`
+See: `references/language-patterns.md`
 
-### React Patterns
-Functional component structure with typed props, custom hooks (useDebounce pattern), proper state updates with functional setters, conditional rendering without ternary chains, useMemo/useCallback memoization, and lazy loading with Suspense.
+### UI Framework Patterns
+Component structure with typed props, reusable logic extraction (hooks, composables, etc.), proper state updates, conditional rendering, memoization, and lazy loading.
 
-See: `references/react-patterns.md`
+See: `references/ui-framework-patterns.md`
 
 ### API Design, Testing & Code Smells
-REST conventions, consistent ApiResponse format, Zod input validation, project file organization and naming, AAA test pattern, descriptive test naming, and anti-pattern detection (long functions, deep nesting, magic numbers).
+REST conventions, consistent ApiResponse format, schema validation (using project's validation library), project file organization and naming, AAA test pattern, descriptive test naming, and anti-pattern detection (long functions, deep nesting, magic numbers).
 
 See: `references/api-testing-patterns.md`
 
@@ -38,4 +38,4 @@ See: `references/api-testing-patterns.md`
 2. **KISS** -- simplest solution that works
 3. **DRY** -- extract and reuse common logic
 4. **YAGNI** -- build only what is needed now
-5. **Immutability** -- never mutate; always spread
+5. **Immutability** -- never mutate; create new instances

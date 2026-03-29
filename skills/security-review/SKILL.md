@@ -22,15 +22,15 @@ Ensures all code follows security best practices and identifies potential vulner
 Review each category. See `references/vulnerability-patterns.md` for WRONG/CORRECT code examples.
 
 1. **Secrets Management** -- No hardcoded secrets; all in env vars; `.env*` gitignored
-2. **Input Validation** -- Schema validation (zod); file upload size/type/extension checks
+2. **Input Validation** -- Schema validation (using project's validation library); file upload size/type/extension checks
 3. **SQL Injection** -- Parameterized queries only; no string concatenation
-4. **Auth & Authorization** -- httpOnly cookies; RBAC; Supabase RLS enabled
-5. **XSS Prevention** -- DOMPurify for user HTML; CSP headers configured
+4. **Auth & Authorization** -- httpOnly cookies; RBAC; database access controls verified
+5. **XSS Prevention** -- Sanitize user HTML (use project's sanitization library); CSP headers configured
 6. **CSRF Protection** -- CSRF tokens on state-changing ops; SameSite=Strict cookies
 7. **Rate Limiting** -- All endpoints rate-limited; stricter on expensive operations
 8. **Data Exposure** -- No secrets in logs; generic error messages to users
-9. **Blockchain** -- Wallet signatures verified; transaction validation; balance checks
-10. **Dependencies** -- `npm audit` clean; lock files committed; Dependabot enabled
+9. **External Integrations** -- API auth verified; responses validated; timeouts configured
+10. **Dependencies** -- Dependency audit clean; lock files committed; automated vulnerability alerts enabled
 
 Full checkbox checklist: `assets/security-checklist.md`
 
@@ -58,8 +58,8 @@ Before ANY production deployment, confirm ALL of the following:
 - `references/vulnerability-patterns.md` -- All WRONG/CORRECT code examples by vulnerability type
 - `assets/security-checklist.md` -- Full security review checklist (markdown checkboxes)
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
-- [Next.js Security](https://nextjs.org/docs/security)
-- [Supabase Security](https://supabase.com/docs/guides/auth)
+- [OWASP Application Security Verification Standard](https://owasp.org/www-project-application-security-verification-standard/)
+- [Database Security Best Practices](https://cheatsheetseries.owasp.org/cheatsheets/Database_Security_Cheat_Sheet.html)
 - [Web Security Academy](https://portswigger.net/web-security)
 
 ---

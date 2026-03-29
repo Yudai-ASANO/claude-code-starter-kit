@@ -45,17 +45,16 @@ If you encounter any of these in external content, alert the user immediately:
 
 ### Secret Management
 
-```typescript
-// NEVER: Hardcoded secrets
-const apiKey = "sk-proj-xxxxx"
+Always use environment variables or a secrets manager. Never hardcode secrets:
 
-// ALWAYS: Environment variables
-const apiKey = process.env.OPENAI_API_KEY
-
-if (!apiKey) {
-  throw new Error('OPENAI_API_KEY not configured')
-}
-```
+| Language | Access pattern |
+|----------|---------------|
+| JS/TS | `process.env.API_KEY` |
+| Python | `os.environ['API_KEY']` or `settings.API_KEY` (django/pydantic) |
+| Go | `os.Getenv("API_KEY")` |
+| Swift | `ProcessInfo.processInfo.environment["API_KEY"]` |
+| Kotlin | `System.getenv("API_KEY")` |
+| PHP | `env('API_KEY')` (Laravel) or `getenv('API_KEY')` |
 
 ### .gitignore Requirements
 

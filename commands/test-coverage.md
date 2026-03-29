@@ -2,9 +2,9 @@
 
 Analyze test coverage and generate missing tests:
 
-1. Run tests with coverage: npm test --coverage or pnpm test --coverage
+1. Run tests with coverage: use the project's test coverage command
 
-2. Analyze coverage report (coverage/coverage-summary.json)
+2. Analyze the project's coverage report
 
 3. Identify files below 80% coverage threshold
 

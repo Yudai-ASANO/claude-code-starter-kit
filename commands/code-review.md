@@ -9,7 +9,7 @@ Comprehensive security and quality review of uncommitted changes:
 **Security Issues (CRITICAL):**
 - Hardcoded credentials, API keys, tokens
 - SQL injection vulnerabilities
-- XSS vulnerabilities  
+- XSS vulnerabilities
 - Missing input validation
 - Insecure dependencies
 - Path traversal risks
@@ -19,9 +19,9 @@ Comprehensive security and quality review of uncommitted changes:
 - Files > 800 lines
 - Nesting depth > 4 levels
 - Missing error handling
-- console.log statements
+- Debug logging statements
 - TODO/FIXME comments
-- Missing JSDoc for public APIs
+- Missing documentation for public APIs
 
 **Best Practices (MEDIUM):**
 - Mutation patterns (use immutable instead)
@@ -38,3 +38,8 @@ Comprehensive security and quality review of uncommitted changes:
 4. Block commit if CRITICAL or HIGH issues found
 
 Never approve code with security vulnerabilities!
+
+## Related Agents
+
+This command invokes the `code-reviewer` agent located at:
+`~/.claude/agents/code-reviewer.md`

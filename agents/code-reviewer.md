@@ -48,18 +48,18 @@ Include specific examples of how to fix issues.
 - Large functions (>50 lines)
 - Large files (>800 lines)
 - Deep nesting (>4 levels)
-- Missing error handling (try/catch)
-- console.log statements
+- Missing error handling (try/catch or equivalent)
+- Debug logging statements
 - Mutation patterns
 - Missing tests for new code
 
 ## Performance (MEDIUM)
 
-- Inefficient algorithms (O(n²) when O(n log n) possible)
-- Unnecessary re-renders in React
-- Missing memoization
-- Large bundle sizes
-- Unoptimized images
+- Inefficient algorithms (O(n^2) when O(n log n) possible)
+- Unnecessary recomputation in UI framework
+- Missing caching/memoization where applicable
+- Large bundle or artifact sizes
+- Unoptimized assets
 - Missing caching
 - N+1 queries
 
@@ -67,7 +67,7 @@ Include specific examples of how to fix issues.
 
 - Emoji usage in code/comments
 - TODO/FIXME without tickets
-- Missing JSDoc for public APIs
+- Missing documentation for public APIs
 - Accessibility issues (missing ARIA labels, poor contrast)
 - Poor variable naming (x, tmp, data)
 - Magic numbers without explanation
@@ -82,24 +82,24 @@ File: src/api/client.ts:42
 Issue: API key exposed in source code
 Fix: Move to environment variable
 
-const apiKey = "sk-abc123";  // ❌ Bad
-const apiKey = process.env.API_KEY;  // ✓ Good
+const apiKey = "sk-abc123";  // BAD
+const apiKey = getEnv("API_KEY");  // GOOD
 ```
 
 ## Approval Criteria
 
-- ✅ Approve: No CRITICAL or HIGH issues
-- ⚠️ Warning: MEDIUM issues only (can merge with caution)
-- ❌ Block: CRITICAL or HIGH issues found
+- Approve: No CRITICAL or HIGH issues
+- Warning: MEDIUM issues only (can merge with caution)
+- Block: CRITICAL or HIGH issues found
 
 ## Project-Specific Guidelines (Example)
 
 Add your project-specific checks here. Examples:
 - Follow MANY SMALL FILES principle (200-400 lines typical)
 - No emojis in codebase
-- Use immutability patterns (spread operator)
-- Verify database RLS policies
-- Check AI integration error handling
+- Use immutability patterns (avoid in-place mutation)
+- Verify access control policies on data layer
+- Check external service integration error handling
 - Validate cache fallback behavior
 
 Customize based on your project's `CLAUDE.md` or skill files.
