@@ -45,9 +45,9 @@ Result: X/Y passed (previously Y/Y)
 
 ### 1. Code-Based Grader
 Deterministic checks using code:
-```bash
-# Check if file contains expected pattern
-grep -q "export function handleAuth" src/auth.ts && echo "PASS" || echo "FAIL"
+```
+# Check if file contains expected pattern (use Grep tool)
+Grep pattern: "export function handleAuth" path: "src/auth.ts"
 
 # Check if tests pass
 <project-test-command> --testPathPattern="auth" && echo "PASS" || echo "FAIL"

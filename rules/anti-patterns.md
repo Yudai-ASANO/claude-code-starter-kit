@@ -4,7 +4,7 @@
 
 - Before calling any API or method, verify it exists in the project's dependencies or documentation.
 - If unsure whether an API exists, check `package.json`, `go.mod`, `requirements.txt`, or equivalent first.
-- Never invent import paths. Always verify with `find` or `grep` before importing.
+- Never invent import paths. Always verify with the Glob or Grep tool before importing.
 
 ## Scope Discipline
 

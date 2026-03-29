@@ -507,26 +507,33 @@ _cleanup_empty_dirs() {
 
 # _collect_orphan_files <claude_dir> <new_files_json>
 #
-# Detect files tracked in the existing manifest but absent from the new
-# desired managed set. Only manifest-tracked files are candidates — user-
-# added files are never touched.
+# Detect files that should be removed during update:
+# 1. Manifest-tracked files absent from the new desired managed set
+# 2. Files in managed directories that have a snapshot entry (i.e., were
+#    previously deployed by the kit) but are absent from the new desired set.
+#    This catches files deployed before manifest tracking was introduced.
+# User-created files (no manifest entry AND no snapshot) are never touched.
 # Outputs orphan file paths (one per line) to stdout.
 # Returns 0 if orphans found, 1 if none.
 _collect_orphan_files() {
   local claude_dir="$1"
   local new_files_json="$2"
   local manifest="${claude_dir}/.starter-kit-manifest.json"
+  local snapshot_dir="${claude_dir}/.starter-kit-snapshot"
 
-  [[ -f "$manifest" ]] || return 1
-
-  # Require manifest v2 with files array
-  local version
-  version="$(jq -r '.version // "1"' "$manifest" 2>/dev/null || echo "1")"
-  [[ "$version" == "2" ]] || return 1
-
-  local old_files_json
-  old_files_json="$(jq -r '.files // "null"' "$manifest" 2>/dev/null)" || return 1
-  [[ "$old_files_json" != "null" ]] || return 1
+  # --- Phase 1: manifest-based orphan detection ---
+  local old_files_json="[]"
+  if [[ -f "$manifest" ]]; then
+    local version
+    version="$(jq -r '.version // "1"' "$manifest" 2>/dev/null || echo "1")"
+    if [[ "$version" == "2" ]]; then
+      local _raw
+      _raw="$(jq -r '.files // "null"' "$manifest" 2>/dev/null)" || true
+      if [[ "$_raw" != "null" ]]; then
+        old_files_json="$_raw"
+      fi
+    fi
+  fi
 
   # In dry-run mode, CLAUDE_DIR is redirected to a sim dir but manifest still
   # contains real ~/.claude paths. Rebase old manifest paths to current claude_dir
@@ -538,16 +545,48 @@ _collect_orphan_files() {
     )" || return 1
   fi
 
-  # Set difference: old_files - new_files
-  # Normalize both sides: filter to strings, deduplicate.
-  # Use -r for raw output (no JSON quotes) and build lookup via
-  # reduce + object keys (compatible with jq 1.6+).
+  # --- Phase 2: scan managed directories for snapshot-backed files ---
+  # Only include files that have a corresponding snapshot entry, proving
+  # they were previously deployed by the kit. User-created files (no
+  # snapshot) are excluded to avoid flagging them as orphans.
+  local -a managed_dirs=(
+    "$claude_dir/agents"
+    "$claude_dir/rules"
+    "$claude_dir/commands"
+    "$claude_dir/skills"
+    "$claude_dir/memory"
+    "$claude_dir/hooks"
+  )
+
+  local disk_files_json="[]"
+  if [[ -d "$snapshot_dir" ]]; then
+    local _dir _disk_list="" _f _rel
+    for _dir in "${managed_dirs[@]}"; do
+      [[ -d "$_dir" ]] || continue
+      while IFS= read -r -d '' _f; do
+        # Skip platform artifacts
+        case "$(basename "$_f")" in
+          .DS_Store|Thumbs.db|desktop.ini) continue ;;
+        esac
+        # Only include files with a snapshot entry (kit-deployed)
+        _rel="${_f#"$claude_dir"/}"
+        [[ -f "${snapshot_dir}/${_rel}" ]] || continue
+        _disk_list="${_disk_list}${_f}"$'\n'
+      done < <(find "$_dir" -maxdepth 4 -type f -print0 2>/dev/null)
+    done
+    if [[ -n "$_disk_list" ]]; then
+      disk_files_json="$(printf '%s' "$_disk_list" | jq -R -s 'split("\n") | map(select(length > 0))')"
+    fi
+  fi
+
+  # Combine: union of manifest files and disk files, then subtract new desired set
   local orphans
   orphans="$(jq -rn \
     --argjson old "$old_files_json" \
+    --argjson disk "$disk_files_json" \
     --argjson new "$new_files_json" \
     '($new | map(select(type=="string")) | unique | reduce .[] as $p ({}; . + {($p): true})) as $new_set |
-     $old | map(select(type=="string")) | unique | map(select($new_set[.] == null)) | .[]'
+     (($old + $disk) | map(select(type=="string")) | unique) | map(select($new_set[.] == null)) | .[]'
   )" || return 1
 
   [[ -n "$orphans" ]] || return 1

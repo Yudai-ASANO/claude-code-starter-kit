@@ -35,18 +35,20 @@ Select tools based on the project's technology stack:
 | **PHP** | `composer audit` | `phpstan-security`, `semgrep` | `trufflehog`, `git-secrets` |
 
 ### Analysis Commands
-```bash
-# Check for secrets in source files (language-agnostic)
-grep -r "api[_-]?key\|password\|secret\|token" --include="*.{js,ts,py,go,swift,kt,java,php}" .
 
-# Scan for hardcoded secrets in the filesystem (install trufflehog first)
-trufflehog filesystem . --json
+Use the Grep tool (not Bash grep) for secret scanning:
+```
+# Check for secrets in source files (use Grep tool)
+Grep pattern: "api[_-]?key|password|secret|token" glob: "*.{js,ts,py,go,swift,kt,java,php}"
 
 # Check git history for leaked secrets
-git log -p | grep -i "password\|api_key\|secret\|private_key"
+git log -p | Grep pattern: "password|api_key|secret|private_key"
 
 # Run semgrep with auto-detection (supports most languages)
 semgrep --config=auto .
+
+# Scan for hardcoded secrets (install trufflehog first)
+trufflehog filesystem . --json
 ```
 
 ## Security Review Workflow

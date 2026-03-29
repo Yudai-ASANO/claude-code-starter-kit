@@ -63,13 +63,15 @@ Report:
 - Coverage: X%
 
 ### Phase 5: Security Scan
-```bash
-# Check for secrets
-grep -rn "sk-" --include="*.ts" --include="*.js" . 2>/dev/null | head -10
-grep -rn "api_key" --include="*.ts" --include="*.js" . 2>/dev/null | head -10
 
-# Check for console.log
-grep -rn "console.log" --include="*.ts" --include="*.tsx" src/ 2>/dev/null | head -10
+Use the Grep tool (not Bash grep) for scanning:
+```
+# Check for secrets (use Grep tool)
+Grep pattern: "sk-" glob: "*.{ts,js}"
+Grep pattern: "api_key" glob: "*.{ts,js}"
+
+# Check for console.log (use Grep tool)
+Grep pattern: "console\\.log" glob: "*.{ts,tsx}" path: "src/"
 ```
 
 ### Phase 6: Diff Review
