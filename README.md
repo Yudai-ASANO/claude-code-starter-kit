@@ -140,7 +140,6 @@ Claude Code のチャットで `/コマンド名` と入力して使うスラッ
 | **strategic-compact** | 論理的な間隔での手動コンテキスト圧縮を提案 |
 | **continuous-learning** | セッションから再利用可能パターンを自動抽出・保存 |
 | **prompt-patterns** | Claude Code を効果的に使うプロンプトパターン集 |
-| **clickhouse-io** | ClickHouse クエリ最適化・分析ワークロード向けパターン |
 | **project-guidelines-example** | プロジェクト固有スキルのテンプレート |
 
 ---
