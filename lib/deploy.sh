@@ -184,6 +184,20 @@ managed_files_json() {
   } | sort -u | jq -R -s 'split("\n")[:-1]'
 }
 
+# Like managed_files_json() but without the [[ -f ]] existence check.
+# Returns ALL paths the current kit would manage, regardless of whether
+# they exist on disk yet. Used by orphan detection to compute the "new"
+# managed set before files are actually deployed.
+desired_managed_files_json() {
+  collect_managed_target_files
+  {
+    local file
+    for file in "${_MANAGED_TARGET_FILES[@]+"${_MANAGED_TARGET_FILES[@]}"}"; do
+      printf '%s\n' "$file"
+    done
+  } | sort -u | jq -R -s 'split("\n")[:-1]'
+}
+
 write_managed_snapshot() {
   collect_managed_target_files
   local snapshot_files=()

@@ -480,6 +480,231 @@ _update_hook_scripts() {
 }
 
 # ---------------------------------------------------------------------------
+# Orphan cleanup: detect and remove kit-managed files that were removed
+# from the kit in newer versions.
+# ---------------------------------------------------------------------------
+
+# _cleanup_empty_dirs <base_dir> [file_paths...]
+#
+# Walk up from each file's parent, removing empty dirs until base_dir.
+_cleanup_empty_dirs() {
+  local base_dir="$1"
+  shift
+
+  local f dir
+  for f in "$@"; do
+    dir="$(dirname "$f")"
+    while [[ "$dir" != "$base_dir" ]] && [[ "$dir" == "$base_dir"/* ]]; do
+      if [[ -d "$dir" ]] && [[ -z "$(ls -A "$dir" 2>/dev/null)" ]]; then
+        rmdir "$dir" 2>/dev/null || break
+        dir="$(dirname "$dir")"
+      else
+        break
+      fi
+    done
+  done
+}
+
+# _collect_orphan_files <claude_dir> <new_files_json>
+#
+# Detect files tracked in the existing manifest but absent from the new
+# desired managed set. Only manifest-tracked files are candidates — user-
+# added files are never touched.
+# Outputs orphan file paths (one per line) to stdout.
+# Returns 0 if orphans found, 1 if none.
+_collect_orphan_files() {
+  local claude_dir="$1"
+  local new_files_json="$2"
+  local manifest="${claude_dir}/.starter-kit-manifest.json"
+
+  [[ -f "$manifest" ]] || return 1
+
+  # Require manifest v2 with files array
+  local version
+  version="$(jq -r '.version // "1"' "$manifest" 2>/dev/null || echo "1")"
+  [[ "$version" == "2" ]] || return 1
+
+  local old_files_json
+  old_files_json="$(jq -r '.files // "null"' "$manifest" 2>/dev/null)" || return 1
+  [[ "$old_files_json" != "null" ]] || return 1
+
+  # In dry-run mode, CLAUDE_DIR is redirected to a sim dir but manifest still
+  # contains real ~/.claude paths. Rebase old manifest paths to current claude_dir
+  # so the set difference works in the same path space as new_files_json.
+  local _real_home_claude="${HOME}/.claude"
+  if [[ "$claude_dir" != "$_real_home_claude" ]]; then
+    old_files_json="$(printf '%s' "$old_files_json" | jq --arg old "$_real_home_claude" --arg new "$claude_dir" \
+      'map(if startswith($old) then ($new + .[($old | length):]) else . end)'
+    )" || return 1
+  fi
+
+  # Set difference: old_files - new_files
+  # Normalize both sides: filter to strings, deduplicate.
+  # Use -r for raw output (no JSON quotes) and build lookup via
+  # reduce + object keys (compatible with jq 1.6+).
+  local orphans
+  orphans="$(jq -rn \
+    --argjson old "$old_files_json" \
+    --argjson new "$new_files_json" \
+    '($new | map(select(type=="string")) | unique | reduce .[] as $p ({}; . + {($p): true})) as $new_set |
+     $old | map(select(type=="string")) | unique | map(select($new_set[.] == null)) | .[]'
+  )" || return 1
+
+  [[ -n "$orphans" ]] || return 1
+  printf '%s\n' "$orphans"
+}
+
+# _remove_orphan_files <claude_dir> <new_files_json> <snapshot_dir>
+#
+# Remove orphaned kit-managed files detected by manifest diff.
+# Respects user modifications: if user edited the file (snapshot != current),
+# interactive mode asks; non-interactive mode preserves the file.
+# Dry-run mode logs DELETE without removing.
+_remove_orphan_files() {
+  local claude_dir="$1"
+  local new_files_json="$2"
+  local snapshot_dir="$3"
+  local _dr="${DRY_RUN:-false}"
+
+  local orphan_list
+  if ! orphan_list="$(_collect_orphan_files "$claude_dir" "$new_files_json")"; then
+    return 0  # no orphans or manifest issue — safe to continue
+  fi
+
+  # Filter to files that exist on disk, exclude legacy AGENTS.md (handled separately)
+  local -a orphans=()
+  while IFS= read -r line; do
+    [[ -n "$line" ]] || continue
+    [[ -f "$line" ]] || continue
+    # Skip AGENTS.md — already handled by dedicated legacy cleanup
+    [[ "$(basename "$line")" != "AGENTS.md" || "$(dirname "$line")" != "$claude_dir" ]] || continue
+    orphans+=("$line")
+  done <<< "$orphan_list"
+
+  [[ ${#orphans[@]} -gt 0 ]] || return 0
+
+  # Build display path: in dry-run mode, orphan paths are in sim dir — map
+  # back to $HOME/.claude/ for user-facing output.
+  _orphan_display() {
+    local p="$1"
+    local rel="${p#"$claude_dir"/}"
+    printf '%s' ".claude/${rel}"
+  }
+
+  # Display orphan list
+  info "${STR_UPDATE_ORPHAN_TITLE:-Removing files no longer in kit}:"
+  local f
+  for f in "${orphans[@]}"; do
+    info "  - ~/$(  _orphan_display "$f")"
+  done
+
+  # Dry-run: model the same preservation logic as the real path.
+  # Only log DELETE for files that would actually be deleted.
+  if [[ "$_dr" == "true" ]]; then
+    for f in "${orphans[@]}"; do
+      local rel="${f#"$claude_dir"/}"
+      local snap_file="${snapshot_dir}/${rel}"
+      local display
+      display="\$HOME/$(_orphan_display "$f")"
+
+      local _would_modify=false
+      if [[ ! -f "$snap_file" ]]; then
+        _would_modify=true
+      elif _file_changed "$snap_file" "$f"; then
+        _would_modify=true
+      fi
+
+      if [[ "$_would_modify" == "true" ]]; then
+        # Non-interactive dry-run: would preserve
+        _dryrun_log "SKIP" "$display" "orphan: user-modified or no snapshot baseline"
+      else
+        _dryrun_log "DELETE" "$display" "orphan: no longer in kit"
+      fi
+    done
+    return 0
+  fi
+
+  # Check each orphan for user modifications before removing
+  local -a removed=()
+  local -a preserved=()
+  for f in "${orphans[@]}"; do
+    local rel="${f#"$claude_dir"/}"
+    local snap_file="${snapshot_dir}/${rel}"
+
+    # Determine if user modified the file
+    local _user_modified=false
+    if [[ ! -f "$snap_file" ]]; then
+      # No snapshot baseline — we cannot confirm the file is unmodified.
+      # Treat as potentially user-modified (conservative).
+      _user_modified=true
+    elif _file_changed "$snap_file" "$f"; then
+      _user_modified=true
+    fi
+
+    if [[ "$_user_modified" == "true" ]]; then
+      if [[ "${_MERGE_INTERACTIVE:-true}" == "true" ]]; then
+        local display
+        display="$(_orphan_display "$f")"
+        printf "  ~/%s was modified (or has no snapshot baseline). [R]emove / [K]eep (default: Keep)? " "$display" >&2
+        local choice=""
+        if read -r choice < /dev/tty 2>/dev/null; then
+          true
+        else
+          choice="k"
+        fi
+        case "$choice" in
+          r|R)
+            rm -f "$f"
+            removed+=("$f")
+            ;;
+          *)
+            preserved+=("$f")
+            ;;
+        esac
+      else
+        # Non-interactive: preserve user-modified / no-baseline files
+        preserved+=("$f")
+      fi
+      continue
+    fi
+
+    # Unmodified (snapshot matches current) — safe to remove
+    rm -f "$f"
+    removed+=("$f")
+  done
+
+  # Clean snapshot entries for ALL orphans (both removed and preserved).
+  # Preserved files are now user-owned and should not remain in the kit snapshot,
+  # which would cause false "user modified kit files" detection on later runs.
+  if [[ -d "$snapshot_dir" ]]; then
+    local -a _snap_removed=()
+    local _all_orphan
+    for _all_orphan in "${removed[@]+"${removed[@]}"}" "${preserved[@]+"${preserved[@]}"}"; do
+      [[ -n "$_all_orphan" ]] || continue
+      local rel="${_all_orphan#"$claude_dir"/}"
+      local snap_path="${snapshot_dir}/${rel}"
+      if [[ -f "$snap_path" ]]; then
+        rm -f "$snap_path"
+        _snap_removed+=("$snap_path")
+      fi
+    done
+    if [[ ${#_snap_removed[@]} -gt 0 ]]; then
+      _cleanup_empty_dirs "$snapshot_dir" "${_snap_removed[@]}"
+    fi
+  fi
+
+  # Clean empty parent directories in deployed tree
+  if [[ ${#removed[@]} -gt 0 ]]; then
+    _cleanup_empty_dirs "$claude_dir" "${removed[@]}"
+    ok "${STR_UPDATE_ORPHAN_DONE:-Removed ${#removed[@]} orphaned file(s)}"
+  fi
+
+  if [[ ${#preserved[@]} -gt 0 ]]; then
+    info "Preserved ${#preserved[@]} user-modified orphan file(s)"
+  fi
+}
+
+# ---------------------------------------------------------------------------
 # run_update - Main entry point for update mode
 #
 # Usage: run_update <project_dir> <claude_dir>
@@ -487,6 +712,7 @@ _update_hook_scripts() {
 # Phases:
 #   1. settings.json: build new, 3-way compare/merge
 #   2. CLAUDE.md: build new, _update_file
+#   2.5. Orphan cleanup (files removed from kit)
 #   3. Content directories (agents, rules, commands, skills, memory)
 #   4. Hook scripts: deploy_hook_scripts
 #   5. Update snapshot for each updated file
@@ -666,6 +892,11 @@ run_update() {
     rm -f "$legacy_agents_md"
     ok "Removed legacy AGENTS.md"
   fi
+
+  # --- Phase 2.5: Orphan cleanup (files removed from kit) ---
+  local _new_desired_files
+  _new_desired_files="$(desired_managed_files_json)"
+  _remove_orphan_files "$claude_dir" "$_new_desired_files" "$snapshot_dir"
 
   # --- Phase 3: Content directories ---
   local dir

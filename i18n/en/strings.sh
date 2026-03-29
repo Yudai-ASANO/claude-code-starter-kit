@@ -202,6 +202,8 @@ STR_UPDATE_SNAPSHOT="Updating snapshot..."
 STR_UPDATE_SNAPSHOT_DONE="Snapshot updated"
 STR_UPDATE_SKIPPED_TITLE="Skipped files (user-modified):"
 STR_UPDATE_COMPLETE="Update complete"
+STR_UPDATE_ORPHAN_TITLE="Removing files no longer managed by kit"
+STR_UPDATE_ORPHAN_DONE="Orphaned files removed"
 STR_UPDATE_V1_WARN="No usable starter-kit snapshot was found. Bootstrapping a migration update from the current ~/.claude state."
 STR_UPDATE_MIGRATION_BOOTSTRAP="A first snapshot will be created from the current ~/.claude state so the safer update path can be used."
 # Major upgrade + skip notifications

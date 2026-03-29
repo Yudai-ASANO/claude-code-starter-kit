@@ -200,6 +200,8 @@ STR_UPDATE_SNAPSHOT="スナップショットを更新中..."
 STR_UPDATE_SNAPSHOT_DONE="スナップショットを更新しました"
 STR_UPDATE_SKIPPED_TITLE="スキップしたファイル（ユーザーが変更済み）:"
 STR_UPDATE_COMPLETE="更新完了"
+STR_UPDATE_ORPHAN_TITLE="キットで管理されなくなったファイルを削除"
+STR_UPDATE_ORPHAN_DONE="不要ファイルを削除しました"
 STR_UPDATE_V1_WARN="使える starter-kit snapshot が見つかりませんでした。現在の ~/.claude 状態から移行アップデートを起動します。"
 STR_UPDATE_MIGRATION_BOOTSTRAP="現在の ~/.claude 状態から最初のスナップショットを作成し、より安全な update path に移行します。"
 # メジャーアップグレード + スキップ通知

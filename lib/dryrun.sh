@@ -271,7 +271,17 @@ _dryrun_collect_deletions() {
   # If no manifest, we can't know what's kit-managed
   [[ -f "$manifest" ]] || return 0
 
-  # Walk manifest-tracked files; if missing from sim dir, it would be deleted
+  # Walk manifest-tracked files; if missing from sim dir, it would be deleted.
+  # Skip entries already logged as DELETE by _remove_orphan_files() to prevent
+  # double reporting in update mode.
+  local _existing_deletes=""
+  local _entry
+  for _entry in "${_DRYRUN_LOG[@]+"${_DRYRUN_LOG[@]}"}"; do
+    case "$_entry" in
+      DELETE\|*) _existing_deletes="${_existing_deletes}${_entry#DELETE|}|" ;;
+    esac
+  done
+
   local file
   while IFS= read -r file; do
     [[ -z "$file" ]] && continue
@@ -279,9 +289,16 @@ _dryrun_collect_deletions() {
 
     local rel_path="${file#"$real_dir"/}"
     local sim_file="${_DRYRUN_DIR}/${rel_path}"
+    local display="\$HOME/.claude/${rel_path}"
 
     if [[ ! -f "$sim_file" ]]; then
-      _dryrun_log "DELETE" "\$HOME/.claude/${rel_path}"
+      # Skip if already logged by orphan cleanup.
+      # Orphan cleanup logs as "$HOME/{rel_from_home}", this logs as
+      # "$HOME/.claude/{rel_from_claude_dir}". Match on the display string.
+      if [[ "$_existing_deletes" == *"${display}|"* ]]; then
+        continue
+      fi
+      _dryrun_log "DELETE" "$display"
     fi
   done < <(jq -r '.files[]? // empty' "$manifest" 2>/dev/null)
 }

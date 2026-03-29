@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.36.0] - 2026-03-29
+
+### Added
+- **Orphan cleanup**: `setup.sh --update` 実行時にキットから削除されたファイルを自動検出・削除。前回manifestと今回manifestの差分比較で検出。ユーザー変更済みファイルはinteractiveで確認、non-interactiveでは保持。Dry-runモードでは `[WOULD DELETE]` として表示
+- `desired_managed_files_json()` ヘルパー — 存在チェックなしでキット管理対象パスを返す（orphan検出用）
+
+### Fixed
+- `wizard/defaults.conf` から削除済みfeatureのエントリ (`ENABLE_PRETTIER_HOOKS`, `ENABLE_CONSOLE_LOG_GUARD`) を除去
+
 ## [0.35.0] - 2026-03-28
 
 ### Changed

@@ -165,6 +165,8 @@ When `install.sh` detects an existing installation with manifest v2 + snapshot, 
 
 **Update verification rule:** For any new feature, verify all three paths: fresh install, `setup.sh --update` (the same path used by `/update-kit`), and saved config reuse in `wizard/wizard.sh`.
 
+**Orphan cleanup:** During update, files present in the old manifest but absent from the new desired managed set (via `desired_managed_files_json()`) are detected as orphans and removed. User-modified orphans (snapshot differs from current) prompt for confirmation in interactive mode; non-interactive mode preserves them. Empty parent directories are cleaned up via `_cleanup_empty_dirs()`. Snapshot entries for removed orphans are also deleted. This ensures files deleted from the kit do not persist in `~/.claude/` across updates. Legacy `AGENTS.md` cleanup is excluded from orphan detection (handled by dedicated code).
+
 **Snapshot directory:** `~/.claude/.starter-kit-snapshot/` mirrors the structure of `~/.claude/` for kit-managed files only.
 
 **Fresh install with existing files:** When `~/.claude/settings.json` exists but no `.starter-kit-manifest.json` is found, the fresh install path uses `_deploy_fresh_with_existing()` instead of the standard overwrite flow. This calls `_merge_settings_bootstrap()` for settings.json (same merge logic as update mode), and offers per-directory `[O]verwrite all / [N]ew files only / [S]kip` prompts for content directories and hook scripts. Non-interactive mode merges settings.json (adopting kit-only keys, preserving user values) and copies only new files for other directories.
