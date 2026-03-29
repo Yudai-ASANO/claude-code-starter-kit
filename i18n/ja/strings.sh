@@ -11,6 +11,11 @@ STR_CODEX_TITLE="OpenAI Codex CLI をタスク委譲に使用しますか？"
 STR_CODEX_YES="はい - CLAUDE.md に Codex CLI 委譲ルールを追加"
 STR_CODEX_NO="いいえ - スキップ（後から追加可能）"
 
+# Step 3b: Gemini CLI
+STR_GEMINI_TITLE="Google Gemini CLI を調査タスク委譲に使用しますか？"
+STR_GEMINI_YES="はい - CLAUDE.md に Gemini CLI 委譲ルールを追加"
+STR_GEMINI_NO="いいえ - スキップ（後から追加可能）"
+
 # Step 3.5: New /init
 STR_NEW_INIT_TITLE="Claude Code の新しい /init 対話モードを有効にしますか？"
 STR_NEW_INIT_DESC="有効にすると、/init で CLAUDE.md だけでなく skills や hooks の初期セットアップ提案も行えるようになります。既定で有効です。"
@@ -59,6 +64,7 @@ STR_CONFIRM_TITLE="設定サマリー"
 STR_CONFIRM_LANGUAGE="言語"
 STR_CONFIRM_NEW_INIT="新しい /init"
 STR_CONFIRM_CODEX="Codex CLI"
+STR_CONFIRM_GEMINI="Gemini CLI"
 STR_CONFIRM_EDITOR="エディタ"
 STR_CONFIRM_HOOKS="フック"
 STR_CONFIRM_PLUGINS="プラグイン"
@@ -169,6 +175,17 @@ STR_CODEX_SETUP_CONFIRM="Codex CLI のセットアップを開始しますか？
 STR_CODEX_SETUP_CONFIRM_YES="はい、セットアップする"
 STR_CODEX_SETUP_CONFIRM_NO="いいえ、スキップする"
 STR_CODEX_SETUP_SKIPPED="Codex CLI のセットアップをスキップしました"
+
+# Post-deploy: Gemini CLI setup
+STR_GEMINI_SETUP_TITLE="Gemini CLI のセットアップ"
+STR_GEMINI_SETUP_NOTE="※ Gemini CLI はインストールと Google アカウント認証が必要です"
+STR_GEMINI_CLI_ALREADY="Gemini CLI はインストール・認証済みです"
+STR_GEMINI_AUTH_CHECKING="Gemini CLI の認証状態を確認中..."
+STR_GEMINI_AUTH_FAILED="Gemini CLI はインストール済みですが、認証に失敗またはタイムアウトしました"
+STR_GEMINI_CLI_NOT_FOUND="Gemini CLI が見つかりません。インストール方法："
+STR_GEMINI_CLI_INSTALL_CMD="  npm install -g @google/gemini-cli"
+STR_GEMINI_CLI_AUTH_HINT="インストール後、'gemini' を一度実行して Google アカウントで認証してください"
+STR_GEMINI_SETUP_SKIPPED="Gemini CLI のセットアップをスキップしました（非対話モード）"
 
 # Update mode
 STR_UPDATE_TITLE="Claude Code Starter Kit を更新中"

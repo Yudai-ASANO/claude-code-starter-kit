@@ -6,6 +6,7 @@
 - Use `/clear` in long sessions to refresh context
 
 {{FEATURE:codex-cli}}
+{{FEATURE:gemini-cli}}
 <!-- END STARTER-KIT-MANAGED -->
 
 # User Settings

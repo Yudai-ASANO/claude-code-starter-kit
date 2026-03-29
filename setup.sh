@@ -291,6 +291,9 @@ if [[ "${DRY_RUN:-false}" == "true" ]]; then
   if is_true "${ENABLE_CODEX_CLI:-false}"; then
     _dryrun_log "EXTERNAL" "Codex CLI" "Codex CLI install + auth (interactive)"
   fi
+  if is_true "${ENABLE_GEMINI_CLI:-false}"; then
+    _dryrun_log "EXTERNAL" "Gemini CLI" "Gemini CLI existence check + guidance"
+  fi
 
   # Shell RC modification (PATH entry for ~/.local/bin)
   _dryrun_log "EXTERNAL" "Shell RC" "append PATH=\$HOME/.local/bin to shell RC file"
@@ -460,6 +463,15 @@ fi
 # shellcheck source=/dev/null
 . "$PROJECT_DIR/lib/codex-setup.sh"
 run_codex_setup
+
+# ---------------------------------------------------------------------------
+# Gemini CLI setup (sourced from lib/gemini-setup.sh)
+# ---------------------------------------------------------------------------
+if is_true "${ENABLE_GEMINI_CLI:-false}"; then
+  # shellcheck source=/dev/null
+  . "$PROJECT_DIR/lib/gemini-setup.sh"
+  run_gemini_setup
+fi
 
 # ---------------------------------------------------------------------------
 # Final safety net: ensure Claude CLI is actually installed

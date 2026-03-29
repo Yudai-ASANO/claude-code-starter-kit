@@ -345,6 +345,11 @@ build_claude_md() {
     inject_feature "$out" "codex-cli" "$partial"
   fi
 
+  if is_true "${ENABLE_GEMINI_CLI:-false}"; then
+    local partial="$PROJECT_DIR/features/gemini-cli/CLAUDE.md.partial.${lang}"
+    inject_feature "$out" "gemini-cli" "$partial"
+  fi
+
   remove_unresolved "$out"
   ok "Built CLAUDE.md"
 }
@@ -359,6 +364,11 @@ build_claude_md_to_file() {
   if is_true "$ENABLE_CODEX_CLI"; then
     local partial="$PROJECT_DIR/features/codex-cli/CLAUDE.md.partial.${lang}"
     inject_feature "$out" "codex-cli" "$partial"
+  fi
+
+  if is_true "${ENABLE_GEMINI_CLI:-false}"; then
+    local partial="$PROJECT_DIR/features/gemini-cli/CLAUDE.md.partial.${lang}"
+    inject_feature "$out" "gemini-cli" "$partial"
   fi
 
   remove_unresolved "$out"
@@ -427,6 +437,12 @@ build_settings_file() {
   if is_true "${ENABLE_CODEX_CLI:-false}"; then
     local codex_hooks="$PROJECT_DIR/features/codex-cli/hooks.json"
     [[ -f "$codex_hooks" ]] && hook_fragments+=("$codex_hooks")
+  fi
+
+  # Special case: gemini-cli (permissions fragment only, no hook types)
+  if is_true "${ENABLE_GEMINI_CLI:-false}"; then
+    local gemini_hooks="$PROJECT_DIR/features/gemini-cli/hooks.json"
+    [[ -f "$gemini_hooks" ]] && hook_fragments+=("$gemini_hooks")
   fi
 
   build_settings_json "$base" "$permissions" "$out" ${hook_fragments[@]+"${hook_fragments[@]}"}

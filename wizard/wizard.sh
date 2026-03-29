@@ -30,6 +30,7 @@ INSTALL_MEMORY="${INSTALL_MEMORY:-}"
 
 ENABLE_CODEX_CLI="${ENABLE_CODEX_CLI:-}"
 ENABLE_CODEX_MCP="${ENABLE_CODEX_MCP:-}"
+ENABLE_GEMINI_CLI="${ENABLE_GEMINI_CLI:-}"
 ENABLE_GIT_PUSH_REVIEW="${ENABLE_GIT_PUSH_REVIEW:-}"
 ENABLE_CHECK_CODEX_AFTER_PLAN="${ENABLE_CHECK_CODEX_AFTER_PLAN:-}"
 ENABLE_CHECK_CODEX_BEFORE_WRITE="${ENABLE_CHECK_CODEX_BEFORE_WRITE:-}"
@@ -134,7 +135,7 @@ _language_label() {
 # ---------------------------------------------------------------------------
 
 # Allowed config variable names (used by _safe_source_config for allowlist validation)
-_CONFIG_ALLOWED_KEYS="LANGUAGE EDITOR_CHOICE COMMIT_ATTRIBUTION ENABLE_NEW_INIT INSTALL_AGENTS INSTALL_RULES INSTALL_COMMANDS INSTALL_SKILLS INSTALL_MEMORY ENABLE_CODEX_CLI ENABLE_CODEX_MCP ENABLE_GIT_PUSH_REVIEW ENABLE_DOC_BLOCKER ENABLE_HARNESS_INIT ENABLE_PRE_COMMIT_GATE ENABLE_POST_TEST_ANALYSIS ENABLE_MEMORY_PERSISTENCE ENABLE_STRATEGIC_COMPACT ENABLE_PR_CREATION_LOG ENABLE_PRE_COMPACT_COMMIT ENABLE_SAFETY_NET ENABLE_AUTO_UPDATE ENABLE_STATUSLINE ENABLE_DOC_SIZE_GUARD ENABLE_CHECK_CODEX_AFTER_PLAN ENABLE_CHECK_CODEX_BEFORE_WRITE ENABLE_ERROR_TO_CODEX SELECTED_PLUGINS"
+_CONFIG_ALLOWED_KEYS="LANGUAGE EDITOR_CHOICE COMMIT_ATTRIBUTION ENABLE_NEW_INIT INSTALL_AGENTS INSTALL_RULES INSTALL_COMMANDS INSTALL_SKILLS INSTALL_MEMORY ENABLE_CODEX_CLI ENABLE_CODEX_MCP ENABLE_GEMINI_CLI ENABLE_GIT_PUSH_REVIEW ENABLE_DOC_BLOCKER ENABLE_HARNESS_INIT ENABLE_PRE_COMMIT_GATE ENABLE_POST_TEST_ANALYSIS ENABLE_MEMORY_PERSISTENCE ENABLE_STRATEGIC_COMPACT ENABLE_PR_CREATION_LOG ENABLE_PRE_COMPACT_COMMIT ENABLE_SAFETY_NET ENABLE_AUTO_UPDATE ENABLE_STATUSLINE ENABLE_DOC_SIZE_GUARD ENABLE_CHECK_CODEX_AFTER_PLAN ENABLE_CHECK_CODEX_BEFORE_WRITE ENABLE_ERROR_TO_CODEX SELECTED_PLUGINS"
 
 # Safe key=value parser: reads a config file line-by-line and only sets
 # variables whose names appear in the allowlist. This replaces the previous
@@ -196,7 +197,7 @@ _CONFIG_SAVE_KEYS=(
   ""
   INSTALL_AGENTS INSTALL_RULES INSTALL_COMMANDS INSTALL_SKILLS INSTALL_MEMORY
   ""
-  ENABLE_CODEX_CLI ENABLE_GIT_PUSH_REVIEW ENABLE_DOC_BLOCKER
+  ENABLE_CODEX_CLI ENABLE_GEMINI_CLI ENABLE_GIT_PUSH_REVIEW ENABLE_DOC_BLOCKER
   ENABLE_HARNESS_INIT ENABLE_PRE_COMMIT_GATE ENABLE_POST_TEST_ANALYSIS ENABLE_MEMORY_PERSISTENCE
   ENABLE_STRATEGIC_COMPACT ENABLE_PR_CREATION_LOG ENABLE_PRE_COMPACT_COMMIT
   ENABLE_SAFETY_NET ENABLE_AUTO_UPDATE ENABLE_STATUSLINE ENABLE_DOC_SIZE_GUARD
@@ -275,6 +276,14 @@ _restore_config_from_manifest() {
     elif [[ -n "$manifest_new_init" ]]; then
       ENABLE_NEW_INIT="$manifest_new_init"
     fi
+  fi
+
+  # Detect ENABLE_GEMINI_CLI from deployed settings.json if not in saved config
+  # (handles upgrades from older installs that lack this key in config)
+  if [[ -z "${ENABLE_GEMINI_CLI:-}" ]] && [[ -f "$current_settings" ]]; then
+    local _has_gemini
+    _has_gemini="$(jq -r '.permissions.allow // [] | map(select(test("gemini"))) | if length > 0 then "true" else "false" end' "$current_settings" 2>/dev/null || echo "false")"
+    ENABLE_GEMINI_CLI="$_has_gemini"
   fi
 
   load_strings "$LANGUAGE"
@@ -540,6 +549,8 @@ parse_cli_args() {
       --codex-cli)       shift; _set_bool ENABLE_CODEX_CLI "${1:-}"; _CLI_OVERRIDES+=("ENABLE_CODEX_CLI") ;;
       --codex-mcp=*)     _set_bool ENABLE_CODEX_CLI "${arg#*=}"; _CLI_OVERRIDES+=("ENABLE_CODEX_CLI") ;; # deprecated alias
       --codex-mcp)       shift; _set_bool ENABLE_CODEX_CLI "${1:-}"; _CLI_OVERRIDES+=("ENABLE_CODEX_CLI") ;; # deprecated alias
+      --gemini-cli=*)    _set_bool ENABLE_GEMINI_CLI "${arg#*=}"; _CLI_OVERRIDES+=("ENABLE_GEMINI_CLI") ;;
+      --gemini-cli)      shift; _set_bool ENABLE_GEMINI_CLI "${1:-}"; _CLI_OVERRIDES+=("ENABLE_GEMINI_CLI") ;;
       --commit-attribution=*) _set_bool COMMIT_ATTRIBUTION "${arg#*=}"; _CLI_OVERRIDES+=("COMMIT_ATTRIBUTION") ;;
       --commit-attribution)   shift; _set_bool COMMIT_ATTRIBUTION "${1:-}"; _CLI_OVERRIDES+=("COMMIT_ATTRIBUTION") ;;
       --hooks=*)
@@ -645,6 +656,18 @@ _step_codex() {
   local _default="2"
   if [[ "${ENABLE_CODEX_CLI:-}" == "true" ]]; then _default="1"; fi
   _prompt_yes_no ENABLE_CODEX_CLI "$_default"
+}
+
+_step_gemini() {
+  # Skip if explicitly set by CLI arg
+  local _ov; for _ov in "${_CLI_OVERRIDES[@]+"${_CLI_OVERRIDES[@]}"}"; do [[ "$_ov" == "ENABLE_GEMINI_CLI" ]] && return; done
+
+  section "$STR_GEMINI_TITLE"
+  printf "  1) %s\n" "$STR_GEMINI_YES"
+  printf "  2) %s\n" "$STR_GEMINI_NO"
+  local _default="2"
+  if [[ "${ENABLE_GEMINI_CLI:-}" == "true" ]]; then _default="1"; fi
+  _prompt_yes_no ENABLE_GEMINI_CLI "$_default"
 }
 
 _step_new_init() {
@@ -792,6 +815,7 @@ _step_confirm() {
   section "$STR_CONFIRM_TITLE"
   printf "%-20s : %s\n" "$STR_CONFIRM_LANGUAGE" "$(_language_label "$LANGUAGE")"
   printf "%-20s : %s\n" "$STR_CONFIRM_CODEX" "$(_bool_label_enabled "$ENABLE_CODEX_CLI")"
+  printf "%-20s : %s\n" "$STR_CONFIRM_GEMINI" "$(_bool_label_enabled "$ENABLE_GEMINI_CLI")"
   printf "%-20s : %s\n" "$STR_CONFIRM_NEW_INIT" "$(_bool_label_enabled "$ENABLE_NEW_INIT")"
   printf "%-20s : %s\n" "$STR_CONFIRM_EDITOR" "$(_editor_label "$EDITOR_CHOICE")"
   printf "%-20s : %s\n" "$STR_CONFIRM_STATUSLINE" "$(_bool_label_enabled "${ENABLE_STATUSLINE:-false}")"
@@ -943,6 +967,7 @@ run_wizard() {
     COMMIT_ATTRIBUTION=""
     ENABLE_NEW_INIT=""
     ENABLE_CODEX_CLI=""
+    ENABLE_GEMINI_CLI=""
     ENABLE_CHECK_CODEX_AFTER_PLAN=""
     ENABLE_CHECK_CODEX_BEFORE_WRITE=""
     ENABLE_ERROR_TO_CODEX=""
@@ -958,6 +983,7 @@ run_wizard() {
 
     _step_profile
     _step_codex
+    _step_gemini
     _step_new_init
     _step_editor
     _step_hooks
@@ -972,6 +998,7 @@ run_wizard() {
       COMMIT_ATTRIBUTION=""
       ENABLE_NEW_INIT=""
       ENABLE_CODEX_CLI=""
+      ENABLE_GEMINI_CLI=""
       ENABLE_CHECK_CODEX_AFTER_PLAN=""
       ENABLE_CHECK_CODEX_BEFORE_WRITE=""
       ENABLE_ERROR_TO_CODEX=""

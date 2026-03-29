@@ -1,0 +1,9 @@
+{
+  "name": "gemini-cli",
+  "displayName": "Gemini CLI Integration",
+  "description": "Delegate web search and external research tasks to Google Gemini CLI",
+  "category": "integration",
+  "default": false,
+  "dependencies": [],
+  "conflicts": []
+}

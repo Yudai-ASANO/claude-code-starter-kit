@@ -6,6 +6,7 @@
 - 長いセッションでは `/clear` を活用してコンテキストをリフレッシュする
 
 {{FEATURE:codex-cli}}
+{{FEATURE:gemini-cli}}
 <!-- END STARTER-KIT-MANAGED -->
 
 # ユーザー設定

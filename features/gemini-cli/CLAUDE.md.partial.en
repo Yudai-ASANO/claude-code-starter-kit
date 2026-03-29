@@ -1,0 +1,85 @@
+## Gemini CLI Sub-Agent Operation
+
+> The following rules apply only when Google Gemini CLI is installed and authenticated.
+> Gemini CLI is used exclusively for **external information retrieval** — web search, external documentation, and fact-checking against live sources.
+
+### Architecture
+
+```
+User → Claude Code (Commander: Design & Integration)
+  ↓
+  Bash(gemini --sandbox -p "..." --output-format json 2>/dev/null) → Gemini CLI (Researcher: Web Search & Fact-Check)
+  ↓
+  Claude Code (Verification & Integration)
+```
+
+### Delegation Priority Matrix (when both Codex CLI and Gemini CLI are enabled)
+
+| Task Type | Delegate To | Rationale |
+|-----------|-------------|-----------|
+| Web search for current/external facts | **Gemini CLI** | Google Search grounding |
+| External documentation lookup | **Gemini CLI** | Web fetch + grounding |
+| Fact-check a specific claim against live sources | **Gemini CLI** | Requires fresh external evidence |
+| Code review / security scanning | **Codex CLI** | Repo-local reasoning |
+| Code generation / refactoring | **Codex CLI** | Implementation expertise |
+| Debug / root-cause analysis | **Codex CLI** | Repo-local reasoning |
+| Single-file edits, config, git, docs, Q&A | **Claude directly** | Simple, no delegation needed |
+
+When only Gemini CLI is enabled (no Codex CLI), Claude handles all code tasks directly and delegates only external research to Gemini.
+
+**Mixed tasks**: When a task combines repo-local reasoning with an external lookup, split it. Send only the bounded external sub-question to Gemini. Perform all repo-local reasoning directly in Claude (or Codex).
+
+### Delegation Criteria — Gemini CLI
+
+Delegate to Gemini CLI **only when ALL of the following are true**:
+1. The task requires **fresh external information** that Claude does not have (post-training data, live URLs, current versions)
+2. The information **cannot be obtained** from the local codebase, git history, or Claude's training data
+3. The query can be expressed as a **bounded research sub-question** (not an open-ended exploration)
+
+Do NOT delegate to Gemini CLI:
+- Code review, debugging, or architecture analysis (use Codex CLI or Claude)
+- Questions answerable from local files or Claude's knowledge
+- Broad "research everything about X" requests (break into specific sub-questions first)
+
+### Command Patterns
+
+All commands MUST use `--sandbox` and `--output-format json`:
+
+| Purpose | Command |
+|---------|---------|
+| Web search | `gemini --sandbox -p "QUERY: <specific question> OUTPUT: Answer with source URLs" --output-format json 2>/dev/null` |
+| Fact-check | `gemini --sandbox -p "VERIFY: <specific claim> OUTPUT: True/False with source URLs" --output-format json 2>/dev/null` |
+| Doc lookup | `gemini --sandbox -p "LOOKUP: <specific API/library question> OUTPUT: Answer with official doc URLs" --output-format json 2>/dev/null` |
+
+### Error Handling
+
+When invoking Gemini CLI, Claude must check the output for errors:
+1. If the Bash command exits non-zero, Gemini CLI itself failed (not installed, auth error, network issue)
+2. If the JSON output contains an `.error` field, the API returned an error (rate limit, invalid request)
+3. If `.response` is missing or empty, the query produced no usable result
+
+If Gemini fails (auth error, rate limit, parse failure), Claude must:
+1. Report the failure to the user transparently ("Gemini CLI lookup failed: [reason]")
+2. State that current external verification was not possible
+3. For current-fact questions (latest versions, current status, live data): do NOT guess from training data. Ask the user if they want an unverified answer from Claude's knowledge or prefer to retry/check manually
+4. For general knowledge questions where freshness is less critical: may answer from training knowledge with explicit caveat "based on training data, not externally verified"
+
+### Verification Rules (CRITICAL)
+
+Claude MUST follow these rules for every Gemini output:
+
+1. **Source URL required**: Gemini output without source URLs is treated as unverified and MUST NOT be used as fact. Instruct Gemini to always include source URLs.
+2. **Direct URL verification**: Before using any Gemini claim in the final answer, Claude MUST verify it against the cited source:
+   - Use `WebFetch` to retrieve the cited URL(s) supporting each material claim and confirm the claim appears in the source content
+   - For non-official or surprising claims, verify against a second independent source
+   - If URL verification fails or is not possible, the claim MUST be either omitted or explicitly presented as "unverified external claim" — never treated as corroborated fact
+   - Claude's own training knowledge alone is NOT sufficient verification for claims that required fresh external data (that is the reason Gemini was called in the first place)
+3. **Never pass through**: Never show Gemini raw output to the user. Always summarize, verify, and integrate.
+4. **Scope evidence**: For codebase-related claims, require `path:line` references. For web claims, require URLs.
+
+### Delegation Rules
+
+1. Prompts must be self-contained (Gemini is stateless)
+2. Each prompt must specify a **bounded scope** — what to search, what format to return, what evidence to include
+3. Never include API keys or secrets in Gemini prompts
+4. Use sandbox mode always (prevents file modifications)

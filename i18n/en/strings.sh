@@ -13,6 +13,11 @@ STR_CODEX_TITLE="Do you use OpenAI Codex CLI for task delegation?"
 STR_CODEX_YES="Yes - Include Codex CLI delegation rules in CLAUDE.md"
 STR_CODEX_NO="No - Skip (you can add this later)"
 
+# Step 3b: Gemini CLI
+STR_GEMINI_TITLE="Do you use Google Gemini CLI for research delegation?"
+STR_GEMINI_YES="Yes - Include Gemini CLI delegation rules in CLAUDE.md"
+STR_GEMINI_NO="No - Skip (you can add this later)"
+
 # Step 3.5: New /init
 STR_NEW_INIT_TITLE="Enable Claude Code's new interactive /init mode?"
 STR_NEW_INIT_DESC="When enabled, /init can propose initial setup for CLAUDE.md, skills, and hooks. It is enabled by default."
@@ -61,6 +66,7 @@ STR_CONFIRM_TITLE="Configuration Summary"
 STR_CONFIRM_LANGUAGE="Language"
 STR_CONFIRM_NEW_INIT="New /init"
 STR_CONFIRM_CODEX="Codex CLI"
+STR_CONFIRM_GEMINI="Gemini CLI"
 STR_CONFIRM_EDITOR="Editor"
 STR_CONFIRM_HOOKS="Hooks"
 STR_CONFIRM_PLUGINS="Plugins"
@@ -171,6 +177,17 @@ STR_CODEX_SETUP_CONFIRM="Start Codex CLI setup? (CLI install + authentication)"
 STR_CODEX_SETUP_CONFIRM_YES="Yes, set it up"
 STR_CODEX_SETUP_CONFIRM_NO="No, skip"
 STR_CODEX_SETUP_SKIPPED="Codex CLI setup skipped"
+
+# Post-deploy: Gemini CLI setup
+STR_GEMINI_SETUP_TITLE="Gemini CLI Setup"
+STR_GEMINI_SETUP_NOTE="Note: Gemini CLI requires installation and Google account authentication"
+STR_GEMINI_CLI_ALREADY="Gemini CLI is installed and authenticated"
+STR_GEMINI_AUTH_CHECKING="Checking Gemini CLI authentication..."
+STR_GEMINI_AUTH_FAILED="Gemini CLI is installed but authentication failed or timed out"
+STR_GEMINI_CLI_NOT_FOUND="Gemini CLI not found. To install:"
+STR_GEMINI_CLI_INSTALL_CMD="  npm install -g @google/gemini-cli"
+STR_GEMINI_CLI_AUTH_HINT="After installing, run 'gemini' once to authenticate with your Google account"
+STR_GEMINI_SETUP_SKIPPED="Gemini CLI setup skipped (non-interactive)"
 
 # Update mode
 STR_UPDATE_TITLE="Updating Claude Code Starter Kit"
