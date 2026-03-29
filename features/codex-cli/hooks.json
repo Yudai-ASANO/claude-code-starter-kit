@@ -1,11 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(codex exec --full-auto *)",
-      "Bash(codex exec --full-auto --sandbox read-only *)",
-      "Bash(codex exec --full-auto -p review *)",
-      "Bash(codex exec --full-auto -p debug *)",
-      "Bash(codex exec --full-auto -p implement *)"
+      "Bash(codex *)",
+      "Bash(codex exec *)"
     ]
   }
 }
