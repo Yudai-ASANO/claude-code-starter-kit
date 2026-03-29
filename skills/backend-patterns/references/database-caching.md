@@ -15,55 +15,61 @@ SELECT * FROM items;
 ```
 
 **ORM equivalent:**
-```typescript
-// GOOD: Select specific columns
-const items = await db.select('id', 'name', 'status', 'volume')
-  .from('items')
-  .where('status', 'active')
-  .orderBy('volume', 'desc')
-  .limit(10)
+```php
+// GOOD: Select specific columns (Eloquent)
+$items = DB::table('items')
+    ->select('id', 'name', 'status', 'volume')
+    ->where('status', 'active')
+    ->orderByDesc('volume')
+    ->limit(10)
+    ->get();
 
 // BAD: Select all columns
-const items = await db.select('*').from('items')
+$items = DB::table('items')->get();
 ```
 
 ## N+1 Query Prevention
 
-```typescript
+```php
 // BAD: N+1 query problem
-const items = await getItems()
-for (const item of items) {
-  item.creator = await getUser(item.creator_id)  // N queries
+$items = Item::all();
+foreach ($items as $item) {
+    $item->creator = User::find($item->creator_id);  // N queries
 }
 
-// GOOD: Batch fetch
-const items = await getItems()
-const creatorIds = items.map(m => m.creator_id)
-const creators = await getUsers(creatorIds)  // 1 query
-const creatorMap = new Map(creators.map(c => [c.id, c]))
-items.forEach(item => {
-  item.creator = creatorMap.get(item.creator_id)
-})
+// GOOD: Eager loading (Eloquent)
+$items = Item::with('creator')->get();
+
+// GOOD: Manual batch fetch — returns immutable DTOs
+$items = $this->getItems();
+$creatorIds = array_map(fn (Item $item) => $item->getCreatorId(), $items);
+$creators = User::whereIn('id', $creatorIds)->get()->keyBy('id');
+$itemsWithCreators = array_map(
+    fn (Item $item) => new ItemWithCreator(
+        item: $item,
+        creator: $creators[$item->getCreatorId()] ?? null,
+    ),
+    $items,
+);
 ```
 
 ## Transaction Pattern
 
 Wrap multi-table writes in a transaction to ensure atomicity.
 
-```typescript
-// Generic transaction pattern
-async function createItemWithDetails(
-  itemData: CreateItemDto,
-  detailData: CreateDetailDto
-) {
-  return await db.transaction(async (trx) => {
-    const item = await trx.insert(itemData).into('items').returning('*')
-    const detail = await trx.insert({
-      ...detailData,
-      item_id: item.id
-    }).into('item_details').returning('*')
-    return { item, detail }
-  })
+```php
+function createItemWithDetails(
+    CreateItemDto $itemData,
+    CreateDetailDto $detailData,
+): array {
+    return DB::transaction(function () use ($itemData, $detailData) {
+        $item = Item::create((array) $itemData);
+        $detail = ItemDetail::create([
+            ...(array) $detailData,
+            'item_id' => $item->id,
+        ]);
+        return ['item' => $item, 'detail' => $detail];
+    });
 }
 ```
 
@@ -77,27 +83,33 @@ COMMIT;
 
 ## Caching Layer (Cache-Aside Pattern)
 
-```typescript
-class CachedItemRepository implements ItemRepository {
-  constructor(
-    private baseRepo: ItemRepository,
-    private cache: CacheClient  // Redis, Memcached, or any key-value store
-  ) {}
+```php
+class CachedItemRepository implements ItemRepository
+{
+    public function __construct(
+        private readonly ItemRepository $baseRepo,
+        private readonly CacheInterface $cache,  // Redis, Memcached, or any PSR-16 store
+    ) {}
 
-  async findById(id: string): Promise<Item | null> {
-    const cached = await this.cache.get(`item:${id}`)
-    if (cached) return JSON.parse(cached)
+    public function findById(string $id): ?Item
+    {
+        $key = "item:{$id}";
+        $cached = $this->cache->get($key);
+        if ($cached !== null) {
+            return $cached;
+        }
 
-    const item = await this.baseRepo.findById(id)
-    if (item) {
-      await this.cache.set(`item:${id}`, JSON.stringify(item), { ttl: 300 })
+        $item = $this->baseRepo->findById($id);
+        if ($item !== null) {
+            $this->cache->set($key, $item, 300);  // TTL in seconds
+        }
+        return $item;
     }
-    return item
-  }
 
-  async invalidateCache(id: string): Promise<void> {
-    await this.cache.del(`item:${id}`)
-  }
+    public function invalidateCache(string $id): void
+    {
+        $this->cache->delete("item:{$id}");
+    }
 }
 ```
 

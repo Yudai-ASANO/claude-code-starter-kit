@@ -1,81 +1,58 @@
-# Error Handling, Auth, Rate Limiting, Jobs & Logging
+# Auth, Retry, Rate Limiting, Jobs & Logging
 
-## Centralized Error Handler
-
-```typescript
-class ApiError extends Error {
-  constructor(
-    public statusCode: number,
-    public message: string,
-    public isOperational = true
-  ) {
-    super(message)
-    Object.setPrototypeOf(this, ApiError.prototype)
-  }
-}
-
-export function errorHandler(error: unknown, req: Request): Response {
-  if (error instanceof ApiError) {
-    return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      { status: error.statusCode, headers: { 'Content-Type': 'application/json' } }
-    )
-  }
-  if (error instanceof ValidationError) {
-    return new Response(
-      JSON.stringify({ success: false, error: 'Validation failed', details: error.errors }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    )
-  }
-  console.error('Unexpected error:', error)
-  return new Response(
-    JSON.stringify({ success: false, error: 'Internal server error' }),
-    { status: 500, headers: { 'Content-Type': 'application/json' } }
-  )
-}
-```
-
-Adapt the `ValidationError` class to match your validation library (Zod `ZodError`, Pydantic `ValidationError`, etc.).
+For centralized error handling, HTTP status codes, and log level definitions, see [http-logging.md](http-logging.md).
 
 ## Retry with Exponential Backoff
 
-```typescript
-async function fetchWithRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
-  let lastError: Error
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      return await fn()
-    } catch (error) {
-      lastError = error as Error
-      if (i < maxRetries - 1) {
-        const delay = Math.pow(2, i) * 1000
-        await new Promise(resolve => setTimeout(resolve, delay))
-      }
+```php
+/**
+ * @template T
+ * @param callable(): T $fn
+ * @return T
+ */
+function fetchWithRetry(callable $fn, int $maxRetries = 3): mixed
+{
+    if ($maxRetries < 1) {
+        throw new \InvalidArgumentException('maxRetries must be >= 1');
     }
-  }
-  throw lastError!
+
+    $lastError = null;
+    for ($i = 0; $i < $maxRetries; $i++) {
+        try {
+            return $fn();
+        } catch (\Throwable $e) {
+            $lastError = $e;
+            if ($i < $maxRetries - 1) {
+                usleep((int) (pow(2, $i) * 1_000_000));  // seconds
+            }
+        }
+    }
+    throw $lastError;
 }
 ```
 
 ## JWT Token Validation & RBAC
 
-```typescript
-export function verifyToken(token: string): JWTPayload {
-  try {
-    return jwt.verify(token, getEnvVar('JWT_SECRET')) as JWTPayload
-  } catch (error) {
-    throw new ApiError(401, 'Invalid token')
-  }
+```php
+function verifyToken(string $token): array
+{
+    try {
+        return (array) JWT::decode($token, new Key(env('JWT_SECRET'), 'HS256'));
+    } catch (\Exception $e) {
+        throw new ApiError(401, 'Invalid token');
+    }
 }
 
-const rolePermissions: Record<User['role'], Permission[]> = {
-  admin: ['read', 'write', 'delete', 'admin'],
-  moderator: ['read', 'write', 'delete'],
-  user: ['read', 'write']
-}
+const ROLE_PERMISSIONS = [
+    'admin'     => ['read', 'write', 'delete', 'admin'],
+    'moderator' => ['read', 'write', 'delete'],
+    'user'      => ['read', 'write'],
+];
 
-export function hasPermission(user: User, permission: Permission): boolean {
-  return rolePermissions[user.role].includes(permission)
+function hasPermission(User $user, string $permission): bool
+{
+    $permissions = ROLE_PERMISSIONS[$user->role] ?? [];
+    return in_array($permission, $permissions, true);
 }
 ```
 
@@ -83,65 +60,88 @@ export function hasPermission(user: User, permission: Permission): boolean {
 
 ## Simple Rate Limiter
 
-```typescript
-class RateLimiter {
-  private requests = new Map<string, number[]>()
+```php
+class RateLimiter
+{
+    /** @var array<string, int[]> */
+    private array $requests = [];
 
-  async checkLimit(identifier: string, maxRequests: number, windowMs: number): Promise<boolean> {
-    const now = Date.now()
-    const requests = this.requests.get(identifier) || []
-    const recentRequests = requests.filter(time => now - time < windowMs)
-    if (recentRequests.length >= maxRequests) return false
-    recentRequests.push(now)
-    this.requests.set(identifier, recentRequests)
-    return true
-  }
+    public function checkLimit(string $identifier, int $maxRequests, int $windowMs): bool
+    {
+        $now = (int) (microtime(true) * 1000);
+        $existing = $this->requests[$identifier] ?? [];
+        $recent = array_filter($existing, fn (int $time) => $now - $time < $windowMs);
+
+        if (count($recent) >= $maxRequests) {
+            return false;
+        }
+
+        $recent[] = $now;
+        $this->requests[$identifier] = array_values($recent);
+        return true;
+    }
 }
 ```
 
-For production, use a distributed rate limiter backed by a cache store (e.g., Redis) to work across multiple server instances.
+For production, use a distributed rate limiter backed by a cache store (e.g., Redis) to work across multiple server instances. Laravel provides `RateLimiter` facade out of the box.
 
 ## Background Job Queue
 
-```typescript
-class JobQueue<T> {
-  private queue: T[] = []
-  private processing = false
+```php
+// Laravel queue job (the concept applies to any queue system)
+class ProcessItemJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-  async add(job: T): Promise<void> {
-    this.queue.push(job)
-    if (!this.processing) this.process()
-  }
+    public function __construct(
+        private readonly Item $item,
+    ) {}
 
-  private async process(): Promise<void> {
-    this.processing = true
-    while (this.queue.length > 0) {
-      const job = this.queue.shift()!
-      try { await this.execute(job) }
-      catch (error) { console.error('Job failed:', error) }
+    public function handle(): void
+    {
+        // Process the item
     }
-    this.processing = false
-  }
+
+    public function failed(\Throwable $e): void
+    {
+        Log::error('Job failed', ['item_id' => $this->item->id, 'error' => $e->getMessage()]);
+    }
 }
+
+// Dispatch
+ProcessItemJob::dispatch($item);
 ```
 
 ## Structured Logging
 
-```typescript
-class Logger {
-  log(level: 'info' | 'warn' | 'error', message: string, context?: LogContext) {
-    console.log(JSON.stringify({
-      timestamp: new Date().toISOString(),
-      level,
-      message,
-      ...context
-    }))
-  }
+```php
+class StructuredLogger
+{
+    public function log(string $level, string $message, array $context = []): void
+    {
+        Log::channel('stderr')->log($level, $message, [
+            'timestamp' => now()->toISOString(),
+            ...$context,
+        ]);
+    }
 
-  info(message: string, context?: LogContext) { this.log('info', message, context) }
-  warn(message: string, context?: LogContext) { this.log('warn', message, context) }
-  error(message: string, error: Error, context?: LogContext) {
-    this.log('error', message, { ...context, error: error.message, stack: error.stack })
-  }
+    public function info(string $message, array $context = []): void
+    {
+        $this->log('info', $message, $context);
+    }
+
+    public function warn(string $message, array $context = []): void
+    {
+        $this->log('warning', $message, $context);
+    }
+
+    public function error(string $message, \Throwable $e, array $context = []): void
+    {
+        $this->log('error', $message, [
+            ...$context,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+    }
 }
 ```

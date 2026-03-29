@@ -16,65 +16,65 @@ GET /api/items?status=active&sort=name&limit=20&offset=0
 
 ## Repository Pattern
 
-```typescript
-interface ItemRepository {
-  findAll(filters?: ItemFilters): Promise<Item[]>
-  findById(id: string): Promise<Item | null>
-  create(data: CreateItemDto): Promise<Item>
-  update(id: string, data: UpdateItemDto): Promise<Item>
-  delete(id: string): Promise<void>
+```php
+interface ItemRepository
+{
+    /** @return Item[] */
+    public function findAll(?ItemFilters $filters = null): array;
+    public function findById(string $id): ?Item;
+    public function create(CreateItemDto $data): Item;
+    public function update(string $id, UpdateItemDto $data): Item;
+    public function delete(string $id): void;
 }
 
-class DatabaseItemRepository implements ItemRepository {
-  async findAll(filters?: ItemFilters): Promise<Item[]> {
-    let query = db.select('*').from('items')
-    if (filters?.status) query = query.where('status', filters.status)
-    if (filters?.limit) query = query.limit(filters.limit)
-    const results = await query
-    return results
-  }
+class DatabaseItemRepository implements ItemRepository
+{
+    public function findAll(?ItemFilters $filters = null): array
+    {
+        $query = DB::table('items');
+        if ($filters?->status) {
+            $query->where('status', $filters->status);
+        }
+        if ($filters?->limit) {
+            $query->limit($filters->limit);
+        }
+
+        return $query->get()->map(fn ($row) => new Item(
+            $row->id, $row->name, $row->status, $row->volume,
+        ))->all();
+    }
 }
 ```
 
 Swap the concrete implementation (SQL, ORM, in-memory) without changing the interface. This is the key benefit of the Repository pattern.
 
-## Service Layer Pattern
+## Business Logic Isolation
 
-```typescript
-class ItemService {
-  constructor(private itemRepo: ItemRepository) {}
-
-  async searchItems(query: string, limit: number = 10): Promise<Item[]> {
-    const embedding = await generateEmbedding(query)
-    const results = await this.vectorSearch(embedding, limit)
-    const items = await this.itemRepo.findByIds(results.map(r => r.id))
-    return items.sort((a, b) => {
-      const scoreA = results.find(r => r.id === a.id)?.score || 0
-      const scoreB = results.find(r => r.id === b.id)?.score || 0
-      return scoreA - scoreB
-    })
-  }
-}
-```
+For isolating business logic from controllers, use the **UseCase pattern** described in [architecture-layers.md](architecture-layers.md). Each UseCase class encapsulates a single business operation and is called by the Controller.
 
 ## Middleware Pattern
 
 Middleware wraps HTTP handlers to add cross-cutting concerns (auth, logging, validation).
 
-```typescript
-// Generic HTTP middleware (framework-agnostic concept)
-function withAuth(handler: RequestHandler): RequestHandler {
-  return async (req, res) => {
-    const token = req.headers.authorization?.replace('Bearer ', '')
-    if (!token) return res.status(401).json({ error: 'Unauthorized' })
-    try {
-      req.user = await verifyToken(token)
-      return handler(req, res)
-    } catch (error) {
-      return res.status(401).json({ error: 'Invalid token' })
+```php
+// Laravel-style middleware (the concept applies to any framework)
+class AuthMiddleware
+{
+    public function handle(Request $request, Closure $next): Response
+    {
+        $token = $request->bearerToken();
+        if (!$token) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        try {
+            $request->merge(['user' => $this->verifyToken($token)]);
+            return $next($request);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Invalid token'], 401);
+        }
     }
-  }
 }
 ```
 
-This pattern works similarly across frameworks: Express middleware, Gin handlers, FastAPI dependencies, Django middleware classes. The core idea is the same -- intercept the request, perform a check, then pass control to the next handler.
+This pattern works similarly across frameworks: Laravel middleware, Symfony event listeners, Slim middleware, CakePHP middleware. The core idea is the same -- intercept the request, perform a check, then pass control to the next handler.
